@@ -19,7 +19,7 @@ defmodule FSMAppWeb.Endpoint do
 
   # LiveView WebSocket endpoint
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: true,
+    websocket: [connect_info: [session: @session_options]],
     longpoll: false
 
   # Serve at "/" the static files from "priv/static" directory.

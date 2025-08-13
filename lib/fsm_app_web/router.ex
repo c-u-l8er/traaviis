@@ -5,6 +5,7 @@ defmodule FSMAppWeb.Router do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
+    plug FSMAppWeb.Auth.Pipeline
     plug :put_root_layout, html: {FSMAppWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
@@ -17,8 +18,22 @@ defmodule FSMAppWeb.Router do
   scope "/", FSMAppWeb do
     pipe_through :browser
 
-    live "/", ControlPanelLive
-    live "/control-panel", ControlPanelLive
+    get "/sign-in", SessionController, :new
+    post "/sign-in", SessionController, :create
+    delete "/sign-out", SessionController, :delete
+    get "/register", RegistrationController, :new
+    post "/register", RegistrationController, :create
+
+    live_session :default,
+      on_mount: [FSMAppWeb.Auth.OnMountCurrentUser, FSMAppWeb.Auth.RequireAuthLive] do
+      live "/", ControlPanelLive
+      live "/control-panel", ControlPanelLive
+      live "/fsms", FSMSLive
+      live "/fsms/:id", FSMSLive
+      live "/tenants", TenantsLive
+      live "/members", MembersLive
+      live "/modules", ModulesLive
+    end
   end
 
   # Other scopes may use custom stacks.

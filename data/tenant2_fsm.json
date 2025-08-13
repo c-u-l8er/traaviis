@@ -4,8 +4,8 @@
   "module": "Elixir.FSM.SmartDoor",
   "metadata": {
     "version": 1,
-    "updated_at": "2025-08-13T19:18:32.229364Z",
-    "created_at": "2025-08-13T19:18:32.229351Z",
+    "created_at": "2025-08-13T19:34:30.386258Z",
+    "updated_at": "2025-08-13T19:34:30.386272Z",
     "tags": []
   },
   "plugins": [
@@ -23,9 +23,9 @@
   "tenant_id": "tenant2",
   "current_state": "closed",
   "performance": {
-    "transition_count": 0,
+    "avg_transition_time": 0,
     "last_transition_at": null,
-    "avg_transition_time": 0
+    "transition_count": 0
   },
   "subscribers": []
 }

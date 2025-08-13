@@ -1,12 +1,43 @@
-<main class="container mx-auto px-4 py-8">
-  <div class="max-w-4xl mx-auto">
-    <header class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">FSM Application</h1>
-      <p class="text-gray-600 mt-2">Finite State Machine Management System</p>
-    </header>
-    
-    <div class="bg-white shadow rounded-lg">
-      <%= @inner_content %>
+<div class="h-screen bg-gray-50 flex overflow-hidden">
+  <aside class="hidden md:flex md:flex-col w-64 bg-white border-r border-gray-200">
+    <div class="h-16 flex items-center px-4 border-b">
+      <div class="text-lg font-semibold text-gray-900">TRAAVIIS</div>
     </div>
+    <nav class="flex-1 overflow-y-auto py-4">
+      <ul class="px-2 space-y-1 text-sm">
+        <li>
+          <.link navigate={~p"/control-panel"} class="block px-3 py-2 rounded hover:bg-gray-100">Dashboard</.link>
+        </li>
+        <li>
+          <.link navigate={~p"/fsms"} class="block px-3 py-2 rounded hover:bg-gray-100">FSMs</.link>
+        </li>
+        <li>
+          <.link navigate={~p"/tenants"} class="block px-3 py-2 rounded hover:bg-gray-100">Tenants</.link>
+        </li>
+        <li>
+          <.link navigate={~p"/members"} class="block px-3 py-2 rounded hover:bg-gray-100">Members</.link>
+        </li>
+        <li>
+          <.link navigate={~p"/modules"} class="block px-3 py-2 rounded hover:bg-gray-100">Modules</.link>
+        </li>
+      </ul>
+    </nav>
+    <div class="px-4 py-4 border-t text-sm text-gray-700">
+      <%= if assigns[:current_user] do %>
+        <div class="mb-2 truncate"><%= @current_user.email %></div>
+        <.link href={~p"/sign-out"} method="delete" data-confirm="Sign out?" class="text-indigo-600 hover:text-indigo-500">Sign out</.link>
+      <% else %>
+        <.link navigate={~p"/sign-in"} class="text-indigo-600 hover:text-indigo-500">Sign in</.link>
+      <% end %>
+    </div>
+  </aside>
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b flex items-center px-4">
+      <h1 class="text-base font-semibold text-gray-900"><%= @page_title || "" %></h1>
+    </header>
+    <main class="flex-1 p-4 overflow-hidden">
+      <%= @inner_content %>
+    </main>
   </div>
-</main>
+</div>

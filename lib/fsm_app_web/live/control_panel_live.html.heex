@@ -1,4 +1,142 @@
-<div class="min-h-screen bg-gray-100">
+<div class="h-full flex flex-col">
+  <div class="flex items-center justify-between pb-3">
+    <h2 class="text-lg font-semibold text-gray-900">Control Panel</h2>
+    <%= if @show_create_modal do %>
+      <span class="ml-3 text-xs text-indigo-600">Create modal open</span>
+    <% end %>
+    <div class="flex items-center space-x-2">
+      <button type="button" phx-click="refresh" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Refresh</button>
+      <button type="button" phx-click="show_create_modal" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">New FSM</button>
+    </div>
+  </div>
+
+  <div class="flex-1 flex gap-4 overflow-hidden">
+    <div class="w-80 shrink-0 flex flex-col overflow-hidden">
+      <div class="bg-white rounded border p-3">
+        <label class="block text-xs font-medium text-gray-700">Tenant</label>
+        <form phx-change="select_tenant">
+          <select name="tenant_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+            <option value="">Select a tenant</option>
+            <%= for t <- @tenants do %>
+              <option value={t.slug} selected={@tenant_id == t.slug}><%= t.name %></option>
+            <% end %>
+          </select>
+        </form>
+        <div class="mt-2">
+          <.link navigate={~p"/tenants"} class="text-xs text-indigo-600 hover:text-indigo-500">Manage tenants</.link>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden">
+        <div class="col-span-1"></div>
+        <div class="col-span-2"></div>
+      </div>
+
+      <div class="mt-4 bg-white rounded border flex-1 overflow-hidden">
+        <div class="overflow-auto h-full">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50 sticky top-0">
+              <tr>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <%= for f <- @fsms do %>
+                <tr>
+                  <td class="px-3 py-2 text-sm text-gray-700"><%= f.id %></td>
+                  <td class="px-3 py-2 text-sm text-gray-700"><%= f.module %></td>
+                  <td class="px-3 py-2">
+                    <span class={"inline-flex rounded-full px-2 text-xs font-semibold leading-5 text-white " <> get_state_color(f.current_state)}>
+                      <%= f.current_state %>
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-right space-x-2">
+                    <.button phx-click="show_event_modal" phx-value-fsm_id={f.id} class="!px-3 !py-1 text-xs">Send Event</.button>
+                    <.button phx-click="destroy_fsm" phx-value-fsm_id={f.id} class="!px-3 !py-1 text-xs bg-red-600 hover:bg-red-500">Delete</.button>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div class="p-4 bg-white rounded border">
+          <div class="text-xs text-gray-500">FSMs</div>
+          <div class="text-xl font-semibold"><%= @stats[:fsm_count] || 0 %></div>
+        </div>
+        <div class="p-4 bg-white rounded border">
+          <div class="text-xs text-gray-500">Events Processed</div>
+          <div class="text-xl font-semibold"><%= get_in(@stats, [:manager_stats, :events_processed]) || 0 %></div>
+        </div>
+        <div class="p-4 bg-white rounded border">
+          <div class="text-xs text-gray-500">Last Updated</div>
+          <div class="text-xl font-semibold"><%= if @stats[:timestamp], do: format_timestamp(@stats[:timestamp]), else: "N/A" %></div>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-white rounded border flex-1 min-h-0 overflow-hidden">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+          <h3 class="text-sm font-medium text-gray-900">FSM Instances</h3>
+          <button type="button" phx-click="show_create_modal" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">Create FSM</button>
+        </div>
+        <div class="overflow-auto h-full">
+          <%= if @tenant_id == nil do %>
+            <div class="text-center py-12 text-sm text-gray-500">Select a tenant to view and create FSMs.</div>
+          <% else %>
+            <%= if Enum.empty?(@fsms) do %>
+              <div class="text-center py-12 text-sm text-gray-500">No FSMs yet.</div>
+            <% else %>
+              <table class="min-w-full divide-y divide-gray-300">
+                <thead class="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <%= for fsm <- @fsms do %>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><%= fsm.id %></td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= fsm.module %></td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{get_state_color(fsm.current_state)} text-white"}>
+                          <%= fsm.current_state %>
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <%= if fsm.metadata && fsm.metadata.created_at do %>
+                          <%= format_timestamp(fsm.metadata.created_at) %>
+                        <% else %>
+                          N/A
+                        <% end %>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                          <button phx-click="show_event_modal" phx-value-fsm_id={fsm.id} class="text-indigo-600 hover:text-indigo-900">Send Event</button>
+                          <button phx-click="destroy_fsm" phx-value-fsm_id={fsm.id} class="text-red-600 hover:text-red-900" data-confirm="Are you sure you want to destroy this FSM?">Destroy</button>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="min-h-screen bg-gray-100 hidden">
   <!-- Header -->
   <div class="bg-white shadow">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -225,24 +363,16 @@
               <p class="mt-1 text-sm text-gray-500">Please select a tenant to access the FSM Control Panel.</p>
               <div class="mt-6">
                 <div class="space-y-3">
-                  <button phx-click="select_tenant" phx-value-tenant_id="tenant1" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                    </svg>
-                    Tenant 1
-                  </button>
-                  <button phx-click="select_tenant" phx-value-tenant_id="tenant2" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                    </svg>
-                    Tenant 2
-                  </button>
-                  <button phx-click="select_tenant" phx-value-tenant_id="tenant3" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                    </svg>
-                    Tenant 3
-                  </button>
+                  <%= if Enum.empty?(@tenants) do %>
+                    <div class="text-sm text-gray-500">No tenants found. Register a new account or contact an admin to be added to a tenant.</div>
+                  <% else %>
+                    <%= for t <- @tenants do %>
+                      <button phx-click="select_tenant" phx-value-tenant_id={t.slug} class="w-full inline-flex justify-between items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <span><%= t.name %></span>
+                        <span class="opacity-80 text-xs"><%= t.slug %></span>
+                      </button>
+                    <% end %>
+                  <% end %>
                 </div>
                 <p class="mt-3 text-xs text-gray-500">Or visit a specific tenant URL: /?tenant_id=your_tenant_name</p>
               </div>
@@ -252,10 +382,11 @@
       </div>
     </div>
   <% end %>
+  </div>
 
   <!-- Create FSM Modal -->
   <%= if @show_create_modal do %>
-    <div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed z-[9999] inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
@@ -319,7 +450,7 @@
 
   <!-- Send Event Modal -->
   <%= if @show_event_modal do %>
-    <div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed z-[9999] inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>

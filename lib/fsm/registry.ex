@@ -72,6 +72,16 @@ defmodule FSM.Registry do
   end
 
   @doc """
+  List all FSMs including their ids.
+
+  Returns a list of `{id, {module, fsm}}` tuples.
+  """
+  @spec list() :: [{fsm_id(), {fsm_module(), fsm_instance()}}]
+  def list() do
+    GenServer.call(__MODULE__, :list)
+  end
+
+  @doc """
   Get statistics about the registry.
   """
   @spec stats() :: map()
@@ -271,6 +281,11 @@ defmodule FSM.Registry do
   def handle_call(:list_all, _from, state) do
     all_fsms = Map.values(state.fsms)
     {:reply, all_fsms, state}
+  end
+
+  @impl true
+  def handle_call(:list, _from, state) do
+    {:reply, Map.to_list(state.fsms), state}
   end
 
   @impl true

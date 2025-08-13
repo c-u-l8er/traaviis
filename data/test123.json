@@ -6,17 +6,17 @@
   "module": "Elixir.FSM.NavigatorTest.TestFSM",
   "metadata": {
     "version": 1,
-    "updated_at": "2025-08-13T19:18:32.235181Z",
-    "created_at": "2025-08-13T19:18:32.235171Z",
+    "created_at": "2025-08-13T19:34:30.388821Z",
+    "updated_at": "2025-08-13T19:34:30.388830Z",
     "tags": []
   },
   "plugins": [],
   "tenant_id": "tenant1",
   "current_state": "idle",
   "performance": {
-    "transition_count": 0,
+    "avg_transition_time": 0,
     "last_transition_at": null,
-    "avg_transition_time": 0
+    "transition_count": 0
   },
   "subscribers": []
 }

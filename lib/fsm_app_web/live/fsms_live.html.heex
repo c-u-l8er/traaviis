@@ -1,0 +1,33 @@
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+  <div class="md:col-span-1 border-r pr-4 overflow-y-auto">
+    <div class="mb-3 text-sm text-gray-600">FSMs</div>
+    <ul class="space-y-1">
+      <%= for f <- @list do %>
+        <li>
+          <button phx-click="select" phx-value-id={f.id} class={"w-full text-left px-3 py-2 rounded border " <> if @selected && @selected.id == f.id, do: "bg-indigo-50 border-indigo-200", else: "bg-white hover:bg-gray-50 border-gray-200"}>
+            <div class="text-sm font-medium text-gray-900"><%= f.id %></div>
+            <div class="text-xs text-gray-600"><%= inspect(f.module) %> • <%= f.state %></div>
+          </button>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+  <div class="md:col-span-2">
+    <%= if @selected do %>
+      <div class="space-y-3">
+        <div class="text-gray-700 text-sm">FSM ID</div>
+        <div class="text-lg font-semibold"><%= @selected.id %></div>
+        <div class="text-gray-700 text-sm">Module</div>
+        <div class="font-mono text-sm"><%= inspect(@selected.module) %></div>
+        <div class="text-gray-700 text-sm">State</div>
+        <div class="inline-flex rounded-full bg-indigo-600 text-white text-xs px-2 py-1"><%= @selected.state %></div>
+        <div class="text-gray-700 text-sm">Data</div>
+        <pre class="bg-gray-50 border border-gray-200 rounded p-3 text-xs overflow-auto"><%= inspect(@selected.data, pretty: true) %></pre>
+      </div>
+    <% else %>
+      <div class="text-sm text-gray-600">Select an item from the list to view details.</div>
+    <% end %>
+  </div>
+</div>
+
+

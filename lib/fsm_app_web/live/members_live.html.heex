@@ -1,0 +1,39 @@
+<div class="space-y-4">
+  <div>
+    <label class="block text-sm text-gray-700">Tenant</label>
+    <select phx-change="select_tenant" name="tenant_id" class="mt-1 block w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+      <%= for t <- @tenants do %>
+        <option value={t.id}><%= t.name %></option>
+      <% end %>
+    </select>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+    <div class="md:col-span-1 border-r pr-4 overflow-y-auto">
+      <div class="mb-3 text-sm text-gray-600">Members</div>
+      <ul class="space-y-1">
+        <%= for m <- @list do %>
+          <li>
+            <button phx-click="select" phx-value-id={m.id} class="w-full text-left px-3 py-2 rounded border bg-white hover:bg-gray-50 border-gray-200">
+              <div class="text-sm font-medium text-gray-900"><%= m.user.email %></div>
+              <div class="text-xs text-gray-600">role: <%= m.role %></div>
+            </button>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+    <div class="md:col-span-2">
+      <%= if @selected do %>
+        <div class="space-y-3">
+          <div class="text-gray-700 text-sm">Member</div>
+          <div class="text-lg font-semibold"><%= @selected.user.email %></div>
+          <div class="text-gray-700 text-sm">Role</div>
+          <div class="font-mono text-sm"><%= @selected.role %></div>
+        </div>
+      <% else %>
+        <div class="text-sm text-gray-600">Select a member to view details.</div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+

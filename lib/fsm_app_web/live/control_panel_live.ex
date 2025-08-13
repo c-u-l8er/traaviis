@@ -10,10 +10,13 @@ defmodule FSMAppWeb.ControlPanelLive do
   - Tenant isolation
   """
   use FSMAppWeb, :live_view
+  on_mount FSMAppWeb.Auth.OnMountCurrentUser
+  on_mount FSMAppWeb.Auth.RequireAuthLive
   require Logger
 
   alias FSM.Manager
   alias FSM.Registry
+  alias FSMApp.Tenancy
 
   @impl true
   def mount(%{}, _session, socket) do
@@ -38,6 +41,7 @@ defmodule FSMAppWeb.ControlPanelLive do
       event_name: "",
       event_data: %{},
       available_events: [],
+      tenants: assigned_tenants(socket),
       page_title: "FSM Control Panel - Select Tenant"
     )
 
@@ -73,6 +77,7 @@ defmodule FSMAppWeb.ControlPanelLive do
       event_name: "",
       event_data: %{},
       available_events: [],
+      tenants: assigned_tenants(socket),
       page_title: "FSM Control Panel - #{tenant_id}"
     )
 
@@ -129,6 +134,7 @@ defmodule FSMAppWeb.ControlPanelLive do
       fsm_config: %{},
       event_name: "",
       event_data: %{},
+      tenants: assigned_tenants(socket),
       page_title: "FSM Control Panel - #{tenant_id}"
     )
 
@@ -370,6 +376,10 @@ defmodule FSMAppWeb.ControlPanelLive do
   end
 
   # Private functions
+  defp assigned_tenants(%{assigns: %{current_user: nil}}), do: []
+  defp assigned_tenants(%{assigns: %{current_user: current_user}}) do
+    Tenancy.list_user_tenants(current_user.id)
+  end
 
   defp send_event_to_fsm(fsm_id, event_name, event_data) do
     require Logger
