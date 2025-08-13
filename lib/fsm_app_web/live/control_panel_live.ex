@@ -16,6 +16,7 @@ defmodule FSMAppWeb.ControlPanelLive do
 
   alias FSM.Manager
   alias FSM.Registry
+  alias FSM.ModuleDiscovery
   alias FSMApp.Tenancy
 
   @impl true
@@ -546,26 +547,11 @@ defmodule FSMAppWeb.ControlPanelLive do
   end
 
   defp get_available_modules do
-    [
-      %{
-        name: "SmartDoor",
-        description: "Smart door with security and timer components",
-        states: ["closed", "opening", "open", "closing"],
-        components: ["Timer", "Security"]
-      },
-      %{
-        name: "SecuritySystem",
-        description: "Security system with monitoring and alarm states",
-        states: ["monitoring", "disarmed", "alarm"],
-        components: ["Security"]
-      },
-      %{
-        name: "Timer",
-        description: "Basic timer with idle, running, paused, and expired states",
-        states: ["idle", "running", "paused", "expired"],
-        components: []
-      }
-    ]
+    # Discover modules dynamically and enrich with optional state/component hints if available
+    ModuleDiscovery.list_available_fsms()
+    |> Enum.map(fn m ->
+      Map.merge(%{states: [], components: []}, m)
+    end)
   end
 
   defp format_timestamp(nil), do: "N/A"

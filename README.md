@@ -1,33 +1,23 @@
-# FSM Production Application
+# TRAAVIIS — The FSM substrate for agentic AI
 
-A production-ready Finite State Machine (FSM) application built with Elixir/Phoenix, featuring a WebSocket API, multi-tenant control panel, and Model Context Protocol (MCP) integration using [Hermes MCP](https://github.com/cloudwalk/hermes-mcp).
+TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑time observability. Model agent workflows as finite state machines and expose them as typed MCP tools using [Hermes MCP](https://github.com/cloudwalk/hermes-mcp).
 
-## 🚀 Features
+## 🚀 Pillars
 
-### Core FSM Framework
-- **Enhanced FSM Navigator**: Production-ready FSM DSL with macros
-- **Modular Components**: Reusable FSM components and plugins
-- **Inter-FSM Communication**: Event-driven communication between FSMs
-- **Performance Monitoring**: Built-in metrics and performance tracking
-- **Multi-tenant Support**: Tenant isolation and management
+- **Deterministic FSM runtime**: Verifiable transitions, journaling, deterministic replay
+- **MCP-native tools**: Typed schemas, generated docs, agent-friendly
+- **Safety & policy**: Guard transitions with policies, rate limits, budgets, and scopes
+- **Observability**: Time-travel debugger, traces, metrics, and alerts
+- **Multi-tenant**: Isolation, quotas, and RBAC
+- **Extensible**: Plugins/components and template blueprints
 
-### WebSocket API
-- **Real-time Communication**: Live FSM state updates via WebSockets
-- **Event Broadcasting**: Real-time event distribution across tenants
-- **Channel Management**: Efficient WebSocket connection handling
-- **Authentication**: Secure tenant-based access control
+## 🤔 Why FSMs for agentic AI?
 
-### Multi-tenant Control Panel
-- **LiveView Interface**: Modern, responsive web interface
-- **FSM Management**: Create, monitor, and manage FSM instances
-- **Real-time Updates**: Live state changes and metrics
-- **Template System**: Predefined FSM templates for quick setup
-
-### MCP Integration
-- **AI Agent Support**: Integration with Claude, GPT, and other LLMs
-- **Standardized Interface**: Model Context Protocol compliance
-- **Rich Tool Set**: Comprehensive FSM management tools
-- **Extensible Architecture**: Plugin-based tool system
+- **Determinism**: Replace ad-hoc tool graphs with reproducible state transitions
+- **Guardrails**: Enforce policies precisely where they matter—before/after transitions
+- **Reproducibility**: Record and replay exact runs for debugging and evaluations
+- **Composability**: Build larger systems from small, proven parts
+- **Auditability**: Signed, queryable transition journals
 
 ## 🏗️ Architecture
 

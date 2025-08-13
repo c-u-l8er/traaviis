@@ -218,6 +218,10 @@ defmodule FSM.Navigator do
       # Component interface
       def states, do: unquote(all_states)
       def transitions, do: unquote(Macro.escape(all_transitions))
+      def components do
+        unquote(Macro.escape(components))
+        |> Enum.map(fn {component_module, _opts} -> component_module end)
+      end
       def current_state(%__MODULE__{current_state: state}), do: state
 
       def can_navigate?(fsm, event) do

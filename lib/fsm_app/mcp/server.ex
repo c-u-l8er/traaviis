@@ -358,27 +358,17 @@ defmodule FSMApp.MCP.Server do
   end
 
   def handle_tool("get_available_fsm_modules", _params, frame) do
-    # This would typically query a registry of available FSM modules
-    # For now, we'll return a hardcoded list
     available_modules = [
-      %{
-        name: "SmartDoor",
-        description: "Smart door with security and timer components",
-        states: ["closed", "opening", "open", "closing"],
-        components: ["Timer", "Security"]
-      },
-      %{
-        name: "SecuritySystem",
-        description: "Security system with monitoring and alarm states",
-        states: ["monitoring", "disarmed", "alarm"],
-        components: ["Security"]
-      },
-      %{
-        name: "Timer",
-        description: "Basic timer with idle, running, paused, and expired states",
-        states: ["idle", "running", "paused", "expired"],
-        components: []
-      }
+      %{name: "FSM.SmartDoor", description: "Smart door with security and timer components"},
+      %{name: "FSM.SecuritySystem", description: "Security system with monitoring and alarm states"},
+      %{name: "FSM.Timer", description: "Basic timer with idle, running, paused, and expired states"},
+      %{name: "FSM.Orchestrators.Saga", description: "Saga orchestrator for multi-step workflows with compensation"},
+      %{name: "FSM.Orchestrators.PlanExecute", description: "Deterministic plan-execute-observe-evaluate loop"},
+      %{name: "FSM.Orchestrators.TaskRouter", description: "Task routing based on policy and retrieval"},
+      %{name: "FSM.Safety.ApprovalGate", description: "Human-in-the-loop approval with escalation"},
+      %{name: "FSM.Safety.BudgetGuard", description: "Budget and quota enforcement"},
+      %{name: "FSM.Reliability.CircuitBreaker", description: "Circuit breaker for reliability"},
+      %{name: "FSM.Integration.ApiCall", description: "External API call with OAuth refresh"}
     ]
 
     result = %{

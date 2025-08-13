@@ -7,7 +7,7 @@
       </div>
       <nav class="flex items-center gap-4">
         <%= if assigns[:current_user] do %>
-          <.link navigate={~p"/control-panel"} class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">Control panel</.link>
+          <.link navigate={~p"/control-panel"} class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">Open control panel</.link>
         <% else %>
           <.link navigate={~p"/sign-in"} class="text-sm text-gray-700 hover:text-gray-900">Sign in</.link>
           <.link navigate={~p"/register"} class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">Get started</.link>
@@ -17,8 +17,8 @@
 
     <div class="mt-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
       <div>
-        <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">Operational FSM Platform for Modern Teams</h1>
-        <p class="mt-6 text-lg leading-7 text-gray-700">Design, observe, and orchestrate finite state machines across tenants with real-time insight, enterprise-grade security, and seamless automation.</p>
+        <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">The FSM substrate for agentic AI</h1>
+        <p class="mt-6 text-lg leading-7 text-gray-700">Give your agents deterministic control, safety guardrails, and real-time observability. TRAAVIIS turns agent workflows into replayable finite state machines and exposes them as typed MCP tools.</p>
         <div class="mt-8 flex items-center gap-4">
           <%= if assigns[:current_user] do %>
             <.link navigate={~p"/control-panel"} class="inline-flex items-center rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700">Open control panel</.link>
@@ -30,20 +30,20 @@
         </div>
         <div class="mt-10 grid grid-cols-2 gap-6 text-sm text-gray-700">
           <div>
-            <div class="font-semibold text-gray-900">Multi-tenant isolation</div>
-            <div class="mt-1">Safeguard data boundaries per tenant with precise role controls.</div>
+            <div class="font-semibold text-gray-900">Deterministic control</div>
+            <div class="mt-1">Replay exact runs, validate transitions, and ship with confidence.</div>
           </div>
           <div>
-            <div class="font-semibold text-gray-900">Real-time visibility</div>
-            <div class="mt-1">Live dashboards and event streams for immediate feedback.</div>
+            <div class="font-semibold text-gray-900">Live observability</div>
+            <div class="mt-1">Time-travel debugger, traces, and metrics for every agent run.</div>
           </div>
           <div>
-            <div class="font-semibold text-gray-900">Composable modules</div>
-            <div class="mt-1">Build with reusable modules like SmartDoor, Security, and Timer.</div>
+            <div class="font-semibold text-gray-900">MCP-native tooling</div>
+            <div class="mt-1">Typed tools and plugins your agents can call safely and predictably.</div>
           </div>
           <div>
-            <div class="font-semibold text-gray-900">Enterprise-ready</div>
-            <div class="mt-1">Auditability, performance, and reliability at scale.</div>
+            <div class="font-semibold text-gray-900">Enterprise-grade safety</div>
+            <div class="mt-1">Policy enforcement, tenant isolation, quotas, and audit logs.</div>
           </div>
         </div>
       </div>
@@ -53,20 +53,20 @@
           <div class="h-64 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 flex items-center justify-center text-blue-700">Product preview</div>
           <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
             <div class="rounded-lg bg-blue-50 p-3">
-              <dt class="font-semibold text-gray-900">FSMs Managed</dt>
+              <dt class="font-semibold text-gray-900">FSM runs today</dt>
               <dd class="mt-1 text-gray-700">10,240+</dd>
             </div>
             <div class="rounded-lg bg-blue-50 p-3">
-              <dt class="font-semibold text-gray-900">Avg. Latency</dt>
-              <dd class="mt-1 text-gray-700">12 ms</dd>
+              <dt class="font-semibold text-gray-900">Deterministic replays</dt>
+              <dd class="mt-1 text-gray-700">12,300</dd>
             </div>
             <div class="rounded-lg bg-blue-50 p-3">
-              <dt class="font-semibold text-gray-900">Tenants</dt>
+              <dt class="font-semibold text-gray-900">Tool schemas</dt>
               <dd class="mt-1 text-gray-700">180+</dd>
             </div>
             <div class="rounded-lg bg-blue-50 p-3">
-              <dt class="font-semibold text-gray-900">Uptime</dt>
-              <dd class="mt-1 text-gray-700">99.99%</dd>
+              <dt class="font-semibold text-gray-900">Policy blocks prevented</dt>
+              <dd class="mt-1 text-gray-700">1,240</dd>
             </div>
           </dl>
         </div>
