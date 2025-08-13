@@ -91,8 +91,7 @@ defmodule FSMApp.MCP.Server do
 
   def handle_tool("create_fsm", %{module: module_name, config: config, tenant_id: tenant_id}, frame) do
     try do
-      # Convert module name string to actual module
-      module = String.to_existing_atom(module_name)
+      module = resolve_module(module_name)
 
       # Create FSM
       case FSM.Manager.create_fsm(module, config || %{}, tenant_id) do
@@ -358,24 +357,42 @@ defmodule FSMApp.MCP.Server do
   end
 
   def handle_tool("get_available_fsm_modules", _params, frame) do
-    available_modules = [
-      %{name: "FSM.SmartDoor", description: "Smart door with security and timer components"},
-      %{name: "FSM.SecuritySystem", description: "Security system with monitoring and alarm states"},
-      %{name: "FSM.Timer", description: "Basic timer with idle, running, paused, and expired states"},
-      %{name: "FSM.Orchestrators.Saga", description: "Saga orchestrator for multi-step workflows with compensation"},
-      %{name: "FSM.Orchestrators.PlanExecute", description: "Deterministic plan-execute-observe-evaluate loop"},
-      %{name: "FSM.Orchestrators.TaskRouter", description: "Task routing based on policy and retrieval"},
-      %{name: "FSM.Safety.ApprovalGate", description: "Human-in-the-loop approval with escalation"},
-      %{name: "FSM.Safety.BudgetGuard", description: "Budget and quota enforcement"},
-      %{name: "FSM.Reliability.CircuitBreaker", description: "Circuit breaker for reliability"},
-      %{name: "FSM.Integration.ApiCall", description: "External API call with OAuth refresh"}
-    ]
+    discovered = FSM.ModuleDiscovery.list_available_fsms()
+    available_modules = Enum.map(discovered, fn m ->
+      %{
+        name: Atom.to_string(m.module),
+        description: m.description,
+        states: m.states,
+        components: m.components
+      }
+    end)
 
     result = %{
       success: true,
       available_modules: available_modules
     }
     {:reply, result, frame}
+  end
+
+  # Helpers
+  defp resolve_module(module_name) when is_atom(module_name), do: module_name
+  defp resolve_module(module_name) when is_binary(module_name) do
+    candidates =
+      cond do
+        String.starts_with?(module_name, "Elixir.") -> [module_name]
+        String.contains?(module_name, ".") -> ["Elixir." <> module_name]
+        true -> ["Elixir.FSM." <> module_name, "Elixir." <> module_name]
+      end
+
+    Enum.find_value(candidates, fn cand ->
+      try do
+        mod = String.to_existing_atom(cand)
+        if Code.ensure_loaded?(mod), do: mod, else: nil
+      rescue
+        _ -> nil
+      end
+    end) ||
+    raise ArgumentError, message: "Unknown module: #{module_name}"
   end
 
   def handle_tool("create_fsm_from_template", %{template_name: template_name, config: config, tenant_id: tenant_id}, frame) do
