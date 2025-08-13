@@ -5,6 +5,8 @@ defmodule FSMAppWeb.RegistrationController do
   alias FSMApp.Tenancy
   alias FSMApp.Accounts.User
 
+  plug :put_layout, false when action in [:new, :create]
+
   def new(conn, _params) do
     changeset = %User{} |> User.registration_changeset(%{}) |> Map.put(:action, :insert)
     render(conn, :new, page_title: "Create your account", changeset: changeset)

@@ -3,6 +3,8 @@ defmodule FSMAppWeb.SessionController do
 
   alias FSMApp.Accounts
 
+  plug :put_layout, false when action in [:new, :create]
+
   def new(conn, _params) do
     render(conn, :new, page_title: "Sign in")
   end

@@ -287,6 +287,45 @@ defmodule FSM.Manager do
     {:reply, combined_stats, state}
   end
 
+  # Timer events forwarded to Manager (e.g., auto-closing safety timer)
+  @impl true
+  def handle_info({:timer_expired, event_name, %{fsm_id: fsm_id} = _payload}, state) do
+    try do
+      case FSM.Registry.get(fsm_id) do
+        {:ok, {module, fsm}} ->
+          # Forward the timer event into the FSM
+          case module.navigate(fsm, event_name, %{}) do
+            {:ok, updated_fsm} ->
+              # Persist updated FSM
+              FSM.Registry.update(fsm_id, updated_fsm)
+
+              # Broadcast state change for real-time updates (matches ControlPanel broadcast shape)
+              Phoenix.PubSub.broadcast!(FSMApp.PubSub, "fsm:#{updated_fsm.tenant_id}", %{
+                event: "fsm_state_changed",
+                payload: %{
+                  fsm_id: fsm_id,
+                  event: to_string(event_name),
+                  from: fsm.current_state,
+                  to: updated_fsm.current_state,
+                  data: updated_fsm.data,
+                  timestamp: DateTime.utc_now()
+                }
+              })
+
+              {:noreply, state}
+
+            {:error, _reason} ->
+              {:noreply, state}
+          end
+
+        {:error, :not_found} ->
+          {:noreply, state}
+      end
+    rescue
+      _ -> {:noreply, state}
+    end
+  end
+
   @impl true
   def handle_info(_msg, state) do
     {:noreply, state}

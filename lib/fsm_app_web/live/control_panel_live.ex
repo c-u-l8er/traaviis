@@ -34,6 +34,9 @@ defmodule FSMAppWeb.ControlPanelLive do
       stats: %{},
       available_modules: [],
       selected_fsm: nil,
+      selected_event: nil,
+      selected_event_index: nil,
+      events_by_fsm: %{},
       show_create_modal: false,
       show_event_modal: false,
       selected_module: nil,
@@ -42,7 +45,8 @@ defmodule FSMAppWeb.ControlPanelLive do
       event_data: %{},
       available_events: [],
       tenants: assigned_tenants(socket),
-      page_title: "FSM Control Panel - Select Tenant"
+      subscribed_tenant_id: nil,
+      page_title: "Dashboard" # FSM Control Panel - Select Tenant
     )
 
     {:ok, socket}
@@ -51,8 +55,10 @@ defmodule FSMAppWeb.ControlPanelLive do
   @impl true
   def mount(%{"tenant_id" => tenant_id}, _session, socket) do
     if connected?(socket) do
-      # Join the FSM channel for real-time updates
-      Phoenix.PubSub.subscribe(FSMApp.PubSub, "fsm:#{tenant_id}")
+      # Join the FSM channel for real-time updates (avoid duplicate subscriptions)
+      if socket.assigns[:subscribed_tenant_id] != tenant_id do
+        Phoenix.PubSub.subscribe(FSMApp.PubSub, "fsm:#{tenant_id}")
+      end
 
       # Set up periodic updates
       :timer.send_interval(5000, self(), :update_stats)
@@ -70,6 +76,9 @@ defmodule FSMAppWeb.ControlPanelLive do
       stats: stats,
       available_modules: available_modules,
       selected_fsm: nil,
+      selected_event: nil,
+      selected_event_index: nil,
+      events_by_fsm: %{},
       show_create_modal: false,
       show_event_modal: false,
       selected_module: nil,
@@ -78,7 +87,8 @@ defmodule FSMAppWeb.ControlPanelLive do
       event_data: %{},
       available_events: [],
       tenants: assigned_tenants(socket),
-      page_title: "FSM Control Panel - #{tenant_id}"
+      subscribed_tenant_id: tenant_id,
+      page_title: "#{tenant_id}"
     )
 
     {:ok, socket}
@@ -109,10 +119,13 @@ defmodule FSMAppWeb.ControlPanelLive do
 
   def handle_event("select_tenant", %{"tenant_id" => tenant_id}, socket) do
     # Update the tenant_id and reload data for the new tenant
-    if connected?(socket) do
-      # Join the FSM channel for real-time updates
+    if connected?(socket) and socket.assigns.subscribed_tenant_id != tenant_id do
+      # Switch PubSub topic: unsubscribe old, subscribe new
+      old = socket.assigns.subscribed_tenant_id
+      if old && old != tenant_id do
+        Phoenix.PubSub.unsubscribe(FSMApp.PubSub, "fsm:#{old}")
+      end
       Phoenix.PubSub.subscribe(FSMApp.PubSub, "fsm:#{tenant_id}")
-
       # Note: Timer is already set up in mount, no need to set it up again
     end
 
@@ -128,6 +141,9 @@ defmodule FSMAppWeb.ControlPanelLive do
       stats: stats,
       available_modules: available_modules,
       selected_fsm: nil,
+      selected_event: nil,
+      selected_event_index: nil,
+      events_by_fsm: %{},
       show_create_modal: false,
       show_event_modal: false,
       selected_module: nil,
@@ -135,7 +151,8 @@ defmodule FSMAppWeb.ControlPanelLive do
       event_name: "",
       event_data: %{},
       tenants: assigned_tenants(socket),
-      page_title: "FSM Control Panel - #{tenant_id}"
+      subscribed_tenant_id: tenant_id,
+      page_title: "#{tenant_id}"
     )
 
     {:noreply, socket}
@@ -198,6 +215,27 @@ defmodule FSMAppWeb.ControlPanelLive do
     )}
   end
 
+  def handle_event("select_fsm", %{"fsm_id" => fsm_id}, socket) do
+    fsm = Enum.find(socket.assigns.fsms, fn f -> f.id == fsm_id end)
+    {:noreply,
+      assign(socket,
+        selected_fsm: fsm,
+        selected_event: nil,
+        selected_event_index: nil
+      )}
+  end
+
+  def handle_event("select_event", %{"index" => index_str}, socket) do
+    with %{} = fsm <- socket.assigns.selected_fsm do
+      events = Map.get(socket.assigns.events_by_fsm, fsm.id, [])
+      index = String.to_integer(index_str)
+      event = Enum.at(events, index)
+      {:noreply, assign(socket, selected_event: event, selected_event_index: index)}
+    else
+      _ -> {:noreply, socket}
+    end
+  end
+
   def handle_event("hide_event_modal", _params, socket) do
     {:noreply, assign(socket, show_event_modal: false, selected_fsm: nil, event_name: "", event_data: %{})}
   end
@@ -238,10 +276,19 @@ defmodule FSMAppWeb.ControlPanelLive do
               {:ok, fsms} = Manager.get_tenant_fsms(socket.assigns.tenant_id)
               stats = get_tenant_stats(socket.assigns.tenant_id)
 
-              {:noreply,
-                socket
-                |> assign(fsms: fsms, stats: stats, show_event_modal: false, selected_fsm: nil, event_name: "", event_data: %{})
-                |> put_flash(:info, "Event '#{event_name}' processed successfully")}
+            {:noreply,
+              socket
+              |> assign(
+                fsms: fsms,
+                stats: stats,
+                show_event_modal: false,
+                selected_fsm: Enum.find(fsms, fn f -> f.id == fsm.id end),
+                selected_event: nil,
+                selected_event_index: nil,
+                event_name: "",
+                event_data: %{}
+              )
+              |> put_flash(:info, "Event '#{event_name}' processed successfully")}
 
             {:error, reason} ->
               {:noreply, put_flash(socket, :error, "Failed to process event: #{inspect(reason)}")}
@@ -310,7 +357,8 @@ defmodule FSMAppWeb.ControlPanelLive do
       }
     }
 
-    updated_fsms = [new_fsm | socket.assigns.fsms]
+    # Ensure we don't add duplicates if the event is received multiple times
+    updated_fsms = [new_fsm | Enum.reject(socket.assigns.fsms, fn f -> f.id == payload.fsm_id end)]
 
     {:noreply,
       socket
@@ -340,9 +388,27 @@ defmodule FSMAppWeb.ControlPanelLive do
       end
     end)
 
+    # Append event entry to the per-FSM events log
+    timestamp = Map.get(payload, :timestamp, DateTime.utc_now())
+    event_name = Map.get(payload, :event)
+    event_entry = %{
+      event: event_name,
+      from: payload.from,
+      to: payload.to,
+      data: payload.data,
+      timestamp: timestamp
+    }
+
+    events_by_fsm = Map.update(socket.assigns.events_by_fsm, payload.fsm_id, [event_entry], fn list ->
+      case List.last(list) do
+        ^event_entry -> list
+        _ -> list ++ [event_entry]
+      end
+    end)
+
     {:noreply,
       socket
-      |> assign(fsms: updated_fsms)
+      |> assign(fsms: updated_fsms, events_by_fsm: events_by_fsm)
       |> put_flash(:info, "FSM #{payload.fsm_id} state changed to #{payload.to}")}
   end
 
@@ -353,7 +419,8 @@ defmodule FSMAppWeb.ControlPanelLive do
 
   # Handle timers from components (e.g., auto-close)
   def handle_info({:timer_expired, :auto_close, %{fsm_id: fsm_id}}, socket) do
-    _ = send_event_to_fsm(fsm_id, "auto_close", %{})
+    # Mark this transition as auto_close-driven so the FSM can start a safety timer
+    _ = send_event_to_fsm(fsm_id, "auto_close", %{auto_close: true})
     {:noreply, socket}
   end
 
@@ -411,9 +478,11 @@ defmodule FSMAppWeb.ControlPanelLive do
               event: "fsm_state_changed",
               payload: %{
                 fsm_id: fsm_id,
+                event: event_name,
                 from: fsm.current_state,
                 to: updated_fsm.current_state,
-                data: updated_fsm.data
+                data: updated_fsm.data,
+                timestamp: DateTime.utc_now()
               }
             })
 
@@ -502,6 +571,14 @@ defmodule FSMAppWeb.ControlPanelLive do
   defp format_timestamp(nil), do: "N/A"
   defp format_timestamp(timestamp) do
     Calendar.strftime(timestamp, "%Y-%m-%d %H:%M:%S")
+  end
+
+  defp encode_pretty_json(value) do
+    try do
+      Jason.encode!(value, pretty: true)
+    rescue
+      _ -> inspect(value)
+    end
   end
 
   defp get_state_color("closed"), do: "bg-gray-500"

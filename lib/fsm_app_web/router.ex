@@ -18,6 +18,7 @@ defmodule FSMAppWeb.Router do
   scope "/", FSMAppWeb do
     pipe_through :browser
 
+    get "/", PageController, :home
     get "/sign-in", SessionController, :new
     post "/sign-in", SessionController, :create
     delete "/sign-out", SessionController, :delete
@@ -26,7 +27,7 @@ defmodule FSMAppWeb.Router do
 
     live_session :default,
       on_mount: [FSMAppWeb.Auth.OnMountCurrentUser, FSMAppWeb.Auth.RequireAuthLive] do
-      live "/", ControlPanelLive
+      # Root path serves splash page; authenticated dashboard available at /control-panel
       live "/control-panel", ControlPanelLive
       live "/fsms", FSMSLive
       live "/fsms/:id", FSMSLive

@@ -1,17 +1,8 @@
 <div class="h-full flex flex-col">
-  <div class="flex items-center justify-between pb-3">
-    <h2 class="text-lg font-semibold text-gray-900">Control Panel</h2>
-    <%= if @show_create_modal do %>
-      <span class="ml-3 text-xs text-indigo-600">Create modal open</span>
-    <% end %>
-    <div class="flex items-center space-x-2">
-      <button type="button" phx-click="refresh" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Refresh</button>
-      <button type="button" phx-click="show_create_modal" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">New FSM</button>
-    </div>
-  </div>
 
-  <div class="flex-1 flex gap-4 overflow-hidden">
-    <div class="w-80 shrink-0 flex flex-col overflow-hidden">
+  <div class="flex-1 grid grid-cols-12 gap-4 overflow-hidden">
+    <!-- Left panel: FSM list -->
+    <div class="col-span-3 flex flex-col overflow-hidden">
       <div class="bg-white rounded border p-3">
         <label class="block text-xs font-medium text-gray-700">Tenant</label>
         <form phx-change="select_tenant">
@@ -27,64 +18,13 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden">
-        <div class="col-span-1"></div>
-        <div class="col-span-2"></div>
-      </div>
-
       <div class="mt-4 bg-white rounded border flex-1 overflow-hidden">
-        <div class="overflow-auto h-full">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50 sticky top-0">
-              <tr>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
-                <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <%= for f <- @fsms do %>
-                <tr>
-                  <td class="px-3 py-2 text-sm text-gray-700"><%= f.id %></td>
-                  <td class="px-3 py-2 text-sm text-gray-700"><%= f.module %></td>
-                  <td class="px-3 py-2">
-                    <span class={"inline-flex rounded-full px-2 text-xs font-semibold leading-5 text-white " <> get_state_color(f.current_state)}>
-                      <%= f.current_state %>
-                    </span>
-                  </td>
-                  <td class="px-3 py-2 text-right space-x-2">
-                    <.button phx-click="show_event_modal" phx-value-fsm_id={f.id} class="!px-3 !py-1 text-xs">Send Event</.button>
-                    <.button phx-click="destroy_fsm" phx-value-fsm_id={f.id} class="!px-3 !py-1 text-xs bg-red-600 hover:bg-red-500">Delete</.button>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div class="p-4 bg-white rounded border">
-          <div class="text-xs text-gray-500">FSMs</div>
-          <div class="text-xl font-semibold"><%= @stats[:fsm_count] || 0 %></div>
-        </div>
-        <div class="p-4 bg-white rounded border">
-          <div class="text-xs text-gray-500">Events Processed</div>
-          <div class="text-xl font-semibold"><%= get_in(@stats, [:manager_stats, :events_processed]) || 0 %></div>
-        </div>
-        <div class="p-4 bg-white rounded border">
-          <div class="text-xs text-gray-500">Last Updated</div>
-          <div class="text-xl font-semibold"><%= if @stats[:timestamp], do: format_timestamp(@stats[:timestamp]), else: "N/A" %></div>
-        </div>
-      </div>
-
-      <div class="mt-4 bg-white rounded border flex-1 min-h-0 overflow-hidden">
-        <div class="px-4 py-3 border-b flex items-center justify-between">
+        <div class="px-3 py-2 border-b flex items-center justify-between">
           <h3 class="text-sm font-medium text-gray-900">FSM Instances</h3>
-          <button type="button" phx-click="show_create_modal" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">Create FSM</button>
+          <div class="flex items-center space-x-2">
+            <button type="button" phx-click="refresh" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">Refresh</button>
+            <button type="button" phx-click="show_create_modal" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">New</button>
+          </div>
         </div>
         <div class="overflow-auto h-full">
           <%= if @tenant_id == nil do %>
@@ -93,46 +33,115 @@
             <%= if Enum.empty?(@fsms) do %>
               <div class="text-center py-12 text-sm text-gray-500">No FSMs yet.</div>
             <% else %>
-              <table class="min-w-full divide-y divide-gray-300">
-                <thead class="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <%= for fsm <- @fsms do %>
-                    <tr>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><%= fsm.id %></td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= fsm.module %></td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{get_state_color(fsm.current_state)} text-white"}>
-                          <%= fsm.current_state %>
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <%= if fsm.metadata && fsm.metadata.created_at do %>
-                          <%= format_timestamp(fsm.metadata.created_at) %>
-                        <% else %>
-                          N/A
-                        <% end %>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div class="flex space-x-2">
-                          <button phx-click="show_event_modal" phx-value-fsm_id={fsm.id} class="text-indigo-600 hover:text-indigo-900">Send Event</button>
-                          <button phx-click="destroy_fsm" phx-value-fsm_id={fsm.id} class="text-red-600 hover:text-red-900" data-confirm="Are you sure you want to destroy this FSM?">Destroy</button>
-                        </div>
-                      </td>
-                    </tr>
-                  <% end %>
-                </tbody>
-              </table>
+              <ul class="divide-y divide-gray-200">
+                <%= for f <- @fsms do %>
+                  <li class={"px-3 py-2 cursor-pointer hover:bg-gray-50 " <> if @selected_fsm && @selected_fsm.id == f.id, do: "bg-indigo-50", else: ""} phx-click="select_fsm" phx-value-fsm_id={f.id}>
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <div class="text-sm font-medium text-gray-900 truncate"><%= f.id %></div>
+                        <div class="text-xs text-gray-500"><%= f.module %></div>
+                      </div>
+                      <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white " <> get_state_color(f.current_state)}><%= f.current_state %></span>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
             <% end %>
           <% end %>
         </div>
+      </div>
+    </div>
+
+    <!-- Middle panel: Selected FSM events list -->
+    <div class="col-span-4 flex flex-col overflow-hidden">
+      <div class="bg-white rounded border p-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-medium text-gray-900">Events</h3>
+            <div class="text-xs text-gray-500 mt-0.5">
+              <%= if @selected_fsm do %>
+                Event history and actions for <span class="font-medium text-gray-700"><%= @selected_fsm.id %></span>.
+              <% else %>
+                Select an FSM to view its event history and trigger events.
+              <% end %>
+            </div>
+          </div>
+          <div>
+            <button
+              type="button"
+              class={"inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white " <> if @selected_fsm, do: "bg-indigo-600 hover:bg-indigo-700", else: "bg-gray-300 cursor-not-allowed"}
+              disabled={is_nil(@selected_fsm)}
+              phx-click="show_event_modal"
+              phx-value-fsm_id={@selected_fsm && @selected_fsm.id}
+            >
+              Trigger Event
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 bg-white rounded border flex-1 overflow-auto">
+        <%= if @selected_fsm == nil do %>
+          <div class="text-center py-12 text-sm text-gray-500">Select an FSM to view its events.</div>
+        <% else %>
+          <% events = Map.get(@events_by_fsm, @selected_fsm.id, []) %>
+          <%= if Enum.empty?(events) do %>
+            <div class="text-center py-12 text-sm text-gray-500">No events yet.</div>
+          <% else %>
+            <ul class="divide-y divide-gray-200">
+              <%= for {ev, idx} <- Enum.with_index(events) do %>
+                <li class={"px-3 py-2 cursor-pointer hover:bg-gray-50 " <> if @selected_event_index == idx, do: "bg-indigo-50", else: ""} phx-click="select_event" phx-value-index={idx}>
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-sm font-medium text-gray-900"><%= ev.event || "state_changed" %></div>
+                      <div class="text-xs text-gray-500">from <%= ev.from %> to <%= ev.to %></div>
+                    </div>
+                    <div class="text-xs text-gray-500"><%= if ev.timestamp, do: format_timestamp(ev.timestamp), else: "" %></div>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Right panel: Event detail -->
+    <div class="col-span-5 flex flex-col overflow-hidden">
+      <div class="bg-white rounded border p-3">
+        <h3 class="text-sm font-medium text-gray-900">Event Detail</h3>
+      </div>
+      <div class="mt-4 bg-white rounded border flex-1 overflow-auto p-4">
+        <%= cond do %>
+          <% @selected_event == nil and @selected_fsm == nil -> %>
+            <div class="text-sm text-gray-500">Select an FSM and an event to see details.</div>
+          <% @selected_event == nil -> %>
+            <div class="text-sm text-gray-500">Select an event to see details.</div>
+          <% true -> %>
+            <div class="space-y-3">
+              <div>
+                <div class="text-xs text-gray-500">Event</div>
+                <div class="text-sm font-medium text-gray-900"><%= @selected_event.event || "state_changed" %></div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <div class="text-xs text-gray-500">From</div>
+                  <div class="text-sm text-gray-900"><%= @selected_event.from %></div>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-500">To</div>
+                  <div class="text-sm text-gray-900"><%= @selected_event.to %></div>
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-500">Timestamp</div>
+                <div class="text-sm text-gray-900"><%= if @selected_event.timestamp, do: format_timestamp(@selected_event.timestamp), else: "" %></div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-500">Data</div>
+                <pre class="text-xs bg-gray-50 p-3 rounded border overflow-auto"><%= encode_pretty_json(@selected_event.data) %></pre>
+              </div>
+            </div>
+        <% end %>
       </div>
     </div>
   </div>
@@ -142,9 +151,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16">
         <div class="flex items-center">
-          <h1 class="text-xl font-semibold text-gray-900">
-            FSM Control Panel
-          </h1>
           <%= if @tenant_id do %>
             <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
               <%= @tenant_id %>

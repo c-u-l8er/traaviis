@@ -159,7 +159,7 @@ defmodule FSM.Navigator do
         start_time = System.monotonic_time(:microsecond)
         old_state = fsm.current_state
 
-        with {:ok, _} <- validate_transition(fsm, event, event_data) do
+        with {:ok, validated_fsm} <- validate_transition(fsm, event, event_data) do
           has_transition? = Enum.any?(unquote(Macro.escape(all_transitions)), fn {from, ev, _to, _opts} ->
             from == old_state and ev == event
           end)
@@ -168,13 +168,13 @@ defmodule FSM.Navigator do
             {:error, :invalid_transition}
           else
             # Apply pre-transition plugins
-            fsm = apply_plugins(fsm, :before_transition, {old_state, event, event_data})
+            validated_fsm = apply_plugins(validated_fsm, :before_transition, {old_state, event, event_data})
 
             # Execute on_exit hook for current state
-            fsm = execute_hook(fsm, :exit, old_state)
+            validated_fsm = execute_hook(validated_fsm, :exit, old_state)
 
             # Perform the actual transition
-            new_fsm = do_navigate(fsm, event, event_data)
+            new_fsm = do_navigate(validated_fsm, event, event_data)
 
             # Execute on_enter hook for new state
             new_fsm = execute_hook(new_fsm, :enter, new_fsm.current_state)

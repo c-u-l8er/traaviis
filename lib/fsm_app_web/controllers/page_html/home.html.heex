@@ -1,0 +1,89 @@
+<section class="min-h-screen bg-blue-50">
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <header class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded bg-blue-600"></div>
+        <span class="text-xl font-semibold text-gray-900">TRAAVIIS</span>
+      </div>
+      <nav class="flex items-center gap-4">
+        <%= if assigns[:current_user] do %>
+          <.link navigate={~p"/control-panel"} class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">Control panel</.link>
+        <% else %>
+          <.link navigate={~p"/sign-in"} class="text-sm text-gray-700 hover:text-gray-900">Sign in</.link>
+          <.link navigate={~p"/register"} class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">Get started</.link>
+        <% end %>
+      </nav>
+    </header>
+
+    <div class="mt-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">Operational FSM Platform for Modern Teams</h1>
+        <p class="mt-6 text-lg leading-7 text-gray-700">Design, observe, and orchestrate finite state machines across tenants with real-time insight, enterprise-grade security, and seamless automation.</p>
+        <div class="mt-8 flex items-center gap-4">
+          <%= if assigns[:current_user] do %>
+            <.link navigate={~p"/control-panel"} class="inline-flex items-center rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700">Open control panel</.link>
+            <span class="text-sm text-gray-600">You’re signed in as <%= @current_user.email %></span>
+          <% else %>
+            <.link navigate={~p"/register"} class="inline-flex items-center rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700">Start free</.link>
+            <.link navigate={~p"/sign-in"} class="text-sm font-semibold text-blue-700 hover:text-blue-800">Sign in</.link>
+          <% end %>
+        </div>
+        <div class="mt-10 grid grid-cols-2 gap-6 text-sm text-gray-700">
+          <div>
+            <div class="font-semibold text-gray-900">Multi-tenant isolation</div>
+            <div class="mt-1">Safeguard data boundaries per tenant with precise role controls.</div>
+          </div>
+          <div>
+            <div class="font-semibold text-gray-900">Real-time visibility</div>
+            <div class="mt-1">Live dashboards and event streams for immediate feedback.</div>
+          </div>
+          <div>
+            <div class="font-semibold text-gray-900">Composable modules</div>
+            <div class="mt-1">Build with reusable modules like SmartDoor, Security, and Timer.</div>
+          </div>
+          <div>
+            <div class="font-semibold text-gray-900">Enterprise-ready</div>
+            <div class="mt-1">Auditability, performance, and reliability at scale.</div>
+          </div>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="absolute -inset-6 bg-gradient-to-tr from-blue-200 via-blue-100 to-transparent rounded-2xl blur-lg"></div>
+        <div class="relative rounded-2xl bg-white shadow-xl ring-1 ring-black/5 p-6">
+          <div class="h-64 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 flex items-center justify-center text-blue-700">Product preview</div>
+          <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
+            <div class="rounded-lg bg-blue-50 p-3">
+              <dt class="font-semibold text-gray-900">FSMs Managed</dt>
+              <dd class="mt-1 text-gray-700">10,240+</dd>
+            </div>
+            <div class="rounded-lg bg-blue-50 p-3">
+              <dt class="font-semibold text-gray-900">Avg. Latency</dt>
+              <dd class="mt-1 text-gray-700">12 ms</dd>
+            </div>
+            <div class="rounded-lg bg-blue-50 p-3">
+              <dt class="font-semibold text-gray-900">Tenants</dt>
+              <dd class="mt-1 text-gray-700">180+</dd>
+            </div>
+            <div class="rounded-lg bg-blue-50 p-3">
+              <dt class="font-semibold text-gray-900">Uptime</dt>
+              <dd class="mt-1 text-gray-700">99.99%</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <footer class="mt-24 border-t border-blue-100 pt-8 text-sm text-gray-600">
+      <div class="flex items-center justify-between">
+        <span>© <%= Date.utc_today().year %> TRAAVIIS</span>
+        <div class="flex items-center gap-4">
+          <a href="#" class="hover:text-gray-900">Privacy</a>
+          <a href="#" class="hover:text-gray-900">Terms</a>
+          <a href="#" class="hover:text-gray-900">Contact</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</section>
+
+

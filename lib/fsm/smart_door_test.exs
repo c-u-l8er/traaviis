@@ -72,8 +72,8 @@ defmodule FSM.SmartDoorTest do
       # Open the door
       {:ok, _} = Manager.send_event(fsm_id, :open_command, %{user_id: "user123"})
       {:ok, _} = Manager.send_event(fsm_id, :fully_open, %{})
-      # Simulate auto-close timer
-      {:ok, _} = Manager.send_event(fsm_id, :auto_close, %{timer: "auto_close_timer"})
+      # Simulate auto-close timer, mark as auto_close to trigger safety timer
+      {:ok, _} = Manager.send_event(fsm_id, :auto_close, %{timer: "auto_close_timer", auto_close: true})
       {:ok, state} = Manager.get_fsm_state(fsm_id)
       assert state.current_state == :closing
     end

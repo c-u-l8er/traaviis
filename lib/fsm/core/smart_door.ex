@@ -36,8 +36,19 @@ defmodule FSM.SmartDoor do
 
   def start_safety_timer(fsm) do
     # Start safety timer for closing operation
-    # After a short delay, auto-complete closing by emitting :fully_closed
-    timer_data = FSM.Components.Timer.start_timer(:fully_closed, 5000, %{fsm_id: fsm.id, tenant_id: fsm.tenant_id}) # 5 seconds
+    # After a short delay, auto-complete closing by emitting :fully_closed (only used for auto-close)
+    # Route this timer to the Manager process so it survives UI process restarts
+    payload = %{fsm_id: fsm.id, tenant_id: fsm.tenant_id}
+    timer_ref = Process.send_after(FSM.Manager, {:timer_expired, :fully_closed, payload}, 5000)
+    timer_data = %{
+      timer_name: :fully_closed,
+      duration: 5000,
+      start_time: System.monotonic_time(:millisecond),
+      remaining_time: 5000,
+      timer_ref: timer_ref,
+      callback: nil,
+      payload: payload
+    }
     new_data = Map.update(fsm.data, :timers, %{safety_check: timer_data}, fn timers ->
       Map.put(timers, :safety_check, timer_data)
     end)
@@ -81,6 +92,7 @@ defmodule FSM.SmartDoor do
   end
 
   initial_state :closed
+  validate :mark_auto_close
 
   # Lifecycle hooks for better state management - defined after functions
   on_enter :opening do
@@ -93,10 +105,21 @@ defmodule FSM.SmartDoor do
   end
 
   on_enter :closing do
-    # Cancel auto-close timer when starting to close, then start safety timer
-    fsm
-    |> __MODULE__.reset_auto_close_timer()
-    |> __MODULE__.start_safety_timer()
+    # Cancel auto-close timer when starting to close
+    fsm = __MODULE__.reset_auto_close_timer(fsm)
+
+    # Only start the safety timer (which triggers :fully_closed) when we entered
+    # :closing via an auto-close event. Detect via marker set in event_data.
+    auto_close_triggered? = fsm.data |> Map.get(:auto_close, false)
+
+    fsm = if auto_close_triggered? do
+      __MODULE__.start_safety_timer(fsm)
+    else
+      fsm
+    end
+
+    # Clear the marker to avoid leaking into future transitions
+    %{fsm | data: Map.delete(fsm.data, :auto_close)}
   end
 
   on_enter :emergency_lock do
@@ -114,4 +137,14 @@ defmodule FSM.SmartDoor do
   end
 
   def handle_external_event(fsm, _source, _event, _data), do: fsm
+
+  # Validation: mark auto_close-triggered transitions so on_enter :closing can auto-complete
+  def mark_auto_close(fsm, event, _event_data) do
+    case {fsm.current_state, event} do
+      {:open, :auto_close} ->
+        {:ok, %{fsm | data: Map.put(fsm.data, :auto_close, true)}}
+      _ ->
+        {:ok, fsm}
+    end
+  end
 end
