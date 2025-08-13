@@ -130,10 +130,11 @@ defmodule FSM.SmartDoorTest do
 
       # Open the door to trigger timer
       {:ok, opening_fsm} = SmartDoor.navigate(fsm, :open_command, %{user_id: "user123"})
+      {:ok, open_fsm} = SmartDoor.navigate(opening_fsm, :fully_open, %{})
 
-      # Check if timer data is stored
-      assert Map.has_key?(opening_fsm.data, :timers)
-      assert Map.has_key?(opening_fsm.data[:timers], :auto_close)
+      # Check if timer data is stored when door is fully open
+      assert Map.has_key?(open_fsm.data, :timers)
+      assert Map.has_key?(open_fsm.data[:timers], :auto_close)
     end
 
     test "Security component integration" do
@@ -168,18 +169,19 @@ defmodule FSM.SmartDoorTest do
     test "stores and retrieves timer data" do
       fsm = SmartDoor.new(%{}, id: "test", tenant_id: "test_tenant")
 
-      # Open door to start timer
+      # Open door to start timer (timer starts when fully open)
       {:ok, opening_fsm} = SmartDoor.navigate(fsm, :open_command, %{user_id: "user123"})
-
-      # Check timer data
-      assert Map.has_key?(opening_fsm.data, :timers)
-      assert Map.has_key?(opening_fsm.data[:timers], :auto_close)
-
-      # Complete opening to reset timer
       {:ok, open_fsm} = SmartDoor.navigate(opening_fsm, :fully_open, %{})
 
-      # Timer should be removed
-      refute Map.has_key?(open_fsm.data[:timers], :auto_close)
+      # Check timer data present in open state
+      assert Map.has_key?(open_fsm.data, :timers)
+      assert Map.has_key?(open_fsm.data[:timers], :auto_close)
+
+      # Start closing should cancel auto-close timer
+      {:ok, closing_fsm} = SmartDoor.navigate(open_fsm, :close_command, %{user_id: "user123"})
+
+      # Timer should be removed or not contain auto_close
+      refute Map.has_key?(Map.get(closing_fsm.data, :timers, %{}), :auto_close)
     end
 
     test "handles user data in events" do

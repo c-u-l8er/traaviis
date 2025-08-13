@@ -38,12 +38,9 @@ defmodule FSM.IntegrationTest do
       {:ok, opening_fsm} = SmartDoor.navigate(fsm, :open_command, %{user_id: "user123"})
       {:ok, open_fsm} = SmartDoor.navigate(opening_fsm, :fully_open, %{})
 
-      # Check that timer was started
-      assert Map.has_key?(opening_fsm.data, :timers)
-      assert Map.has_key?(opening_fsm.data[:timers], :auto_close)
-
-      # Check that timer was reset when door opened
-      refute Map.has_key?(open_fsm.data[:timers], :auto_close)
+      # Check that timer was started when door is fully open
+      assert Map.has_key?(open_fsm.data, :timers)
+      assert Map.has_key?(open_fsm.data[:timers], :auto_close)
     end
 
     test "security integration with emergency scenarios" do

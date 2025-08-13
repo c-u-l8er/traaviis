@@ -12,8 +12,8 @@ defmodule FSM.SmartDoor do
 
   # Helper functions for component integration - defined first
   def start_auto_close_timer(fsm) do
-    # Use the Timer component to start auto-close timer
-    timer_data = FSM.Components.Timer.start_timer(:auto_close, 30000) # 30 seconds
+    # Use the Timer component to start auto-close timer with targeting info
+    timer_data = FSM.Components.Timer.start_timer(:auto_close, 30000, %{fsm_id: fsm.id, tenant_id: fsm.tenant_id}) # 30 seconds
     # Store timer data in FSM data
     new_data = Map.update(fsm.data, :timers, %{auto_close: timer_data}, fn timers ->
       Map.put(timers, :auto_close, timer_data)
@@ -36,7 +36,8 @@ defmodule FSM.SmartDoor do
 
   def start_safety_timer(fsm) do
     # Start safety timer for closing operation
-    timer_data = FSM.Components.Timer.start_timer(:safety_check, 5000) # 5 seconds
+    # After a short delay, auto-complete closing by emitting :fully_closed
+    timer_data = FSM.Components.Timer.start_timer(:fully_closed, 5000, %{fsm_id: fsm.id, tenant_id: fsm.tenant_id}) # 5 seconds
     new_data = Map.update(fsm.data, :timers, %{safety_check: timer_data}, fn timers ->
       Map.put(timers, :safety_check, timer_data)
     end)
@@ -83,18 +84,19 @@ defmodule FSM.SmartDoor do
 
   # Lifecycle hooks for better state management - defined after functions
   on_enter :opening do
-    # Start timer for auto-close
-    __MODULE__.start_auto_close_timer(fsm)
+    fsm
   end
 
   on_enter :open do
-    # Reset timer when door is fully open
-    __MODULE__.reset_auto_close_timer(fsm)
+    # Start or restart auto-close timer when door is fully open
+    __MODULE__.start_auto_close_timer(fsm)
   end
 
   on_enter :closing do
-    # Start safety timer
-    __MODULE__.start_safety_timer(fsm)
+    # Cancel auto-close timer when starting to close, then start safety timer
+    fsm
+    |> __MODULE__.reset_auto_close_timer()
+    |> __MODULE__.start_safety_timer()
   end
 
   on_enter :emergency_lock do

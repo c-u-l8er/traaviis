@@ -202,17 +202,29 @@ defmodule FSMAppWeb.ControlPanelLive do
     {:noreply, put_flash(socket, :error, "Please select a tenant first")}
   end
 
-  def handle_event("send_event", _params, socket) do
+  def handle_event("send_event", params, socket) do
     case socket.assigns.selected_fsm do
       nil ->
         {:noreply, put_flash(socket, :error, "No FSM selected")}
 
       fsm ->
-        if socket.assigns.event_name == "" do
+        event_name = Map.get(params, "event_name", socket.assigns.event_name)
+        event_data_json = Map.get(params, "event_data", nil)
+        event_data =
+          case event_data_json do
+            nil -> socket.assigns.event_data
+            "" -> %{}
+            data -> case Jason.decode(data) do
+              {:ok, decoded} -> decoded
+              _ -> socket.assigns.event_data
+            end
+          end
+
+        if event_name == "" do
           {:noreply, put_flash(socket, :error, "Event name is required")}
         else
           # Actually send the event to the FSM
-          case send_event_to_fsm(fsm.id, socket.assigns.event_name, socket.assigns.event_data) do
+          case send_event_to_fsm(fsm.id, event_name, event_data) do
             {:ok, _updated_fsm} ->
               # Refresh the FSM list to show the updated state
               {:ok, fsms} = Manager.get_tenant_fsms(socket.assigns.tenant_id)
@@ -221,7 +233,7 @@ defmodule FSMAppWeb.ControlPanelLive do
               {:noreply,
                 socket
                 |> assign(fsms: fsms, stats: stats, show_event_modal: false, selected_fsm: nil, event_name: "", event_data: %{})
-                |> put_flash(:info, "Event '#{socket.assigns.event_name}' processed successfully")}
+                |> put_flash(:info, "Event '#{event_name}' processed successfully")}
 
             {:error, reason} ->
               {:noreply, put_flash(socket, :error, "Failed to process event: #{inspect(reason)}")}
@@ -311,10 +323,9 @@ defmodule FSMAppWeb.ControlPanelLive do
     # Update FSM state in the list
     updated_fsms = Enum.map(socket.assigns.fsms, fn fsm ->
       if fsm.id == payload.fsm_id do
-        %{fsm |
-          current_state: payload.to,
-          data: payload.data
-        }
+        fsm
+        |> Map.put(:current_state, payload.to)
+        |> Map.put(:data, payload.data)
       else
         fsm
       end
@@ -330,6 +341,21 @@ defmodule FSMAppWeb.ControlPanelLive do
     # No tenant selected, skip stats update
     {:noreply, socket}
   end
+
+  # Handle timers from components (e.g., auto-close)
+  def handle_info({:timer_expired, :auto_close, %{fsm_id: fsm_id}}, socket) do
+    _ = send_event_to_fsm(fsm_id, "auto_close", %{})
+    {:noreply, socket}
+  end
+
+  # Ignore other timer messages
+  def handle_info({:timer_expired, :fully_closed, %{fsm_id: fsm_id}}, socket) do
+    _ = send_event_to_fsm(fsm_id, "fully_closed", %{})
+    {:noreply, socket}
+  end
+
+  def handle_info({:timer_expired, _name}, socket), do: {:noreply, socket}
+  def handle_info({:timer_expired, _name, _payload}, socket), do: {:noreply, socket}
 
   def handle_info(:update_stats, socket) do
     stats = get_tenant_stats(socket.assigns.tenant_id)
@@ -360,7 +386,7 @@ defmodule FSMAppWeb.ControlPanelLive do
         Logger.info("Calling #{module}.navigate(#{inspect(fsm)}, #{event_atom}, #{inspect(event_data)})")
 
         case module.navigate(fsm, event_atom, event_data) do
-          updated_fsm when is_map(updated_fsm) ->
+          {:ok, updated_fsm} ->
             Logger.info("FSM navigation successful. State changed from #{fsm.current_state} to #{updated_fsm.current_state}")
 
             # Update the FSM in the registry
@@ -368,11 +394,14 @@ defmodule FSMAppWeb.ControlPanelLive do
             Logger.info("FSM updated in registry")
 
             # Broadcast state change for real-time updates
-            Phoenix.PubSub.broadcast!(FSMApp.PubSub, "fsm:#{fsm.tenant_id}", "fsm_state_changed", %{
-              fsm_id: fsm_id,
-              from: fsm.current_state,
-              to: updated_fsm.current_state,
-              data: updated_fsm.data
+            Phoenix.PubSub.broadcast!(FSMApp.PubSub, "fsm:#{fsm.tenant_id}", %{
+              event: "fsm_state_changed",
+              payload: %{
+                fsm_id: fsm_id,
+                from: fsm.current_state,
+                to: updated_fsm.current_state,
+                data: updated_fsm.data
+              }
             })
 
             {:ok, updated_fsm}

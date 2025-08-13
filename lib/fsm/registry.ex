@@ -99,17 +99,21 @@ defmodule FSM.Registry do
 
   @impl true
   def init(_) do
-    {:ok, %{
-      fsms: %{},
-      tenants: %{},
-      modules: %{},
-      stats: %{
-        total_registered: 0,
-        total_unregistered: 0,
-        current_count: 0,
-        last_activity: nil
-      }
-    }}
+    case load_state_from_json() do
+      {:ok, state} -> {:ok, state}
+      :error ->
+        {:ok, %{
+          fsms: %{},
+          tenants: %{},
+          modules: %{},
+          stats: %{
+            total_registered: 0,
+            total_unregistered: 0,
+            current_count: 0,
+            last_activity: nil
+          }
+        }}
+    end
   end
 
   @impl true
@@ -148,6 +152,7 @@ defmodule FSM.Registry do
     }
 
     Logger.info("FSM registered: #{inspect(id)} (#{inspect(module)})")
+    persist_fsm_to_file(id, module, fsm)
     {:reply, :ok, new_state}
   end
 
@@ -194,6 +199,7 @@ defmodule FSM.Registry do
         }
 
         Logger.debug("FSM updated: #{inspect(id)}")
+        persist_fsm_to_file(id, module, fsm)
         {:reply, :ok, new_state}
 
       nil -> {:reply, {:error, :not_found}, state}
@@ -237,6 +243,7 @@ defmodule FSM.Registry do
         }
 
         Logger.info("FSM unregistered: #{inspect(id)}")
+        delete_fsm_file(id)
         {:reply, :ok, new_state}
 
       nil -> {:reply, :ok, state}
@@ -310,6 +317,220 @@ defmodule FSM.Registry do
       {:health_status, status} -> status
     after
       5000 -> {:error, :timeout}
+    end
+  end
+
+  # JSON persistence helpers (./data/*.json)
+  defp data_dir, do: Path.expand("data")
+
+  defp fsm_file_path(id), do: Path.join(data_dir(), "#{id}.json")
+
+  defp persist_fsm_to_file(id, module, fsm) do
+    File.mkdir_p!(data_dir())
+    json_map = serialize_fsm_for_json(module, fsm)
+    case Jason.encode(json_map, pretty: true) do
+      {:ok, json} -> File.write(fsm_file_path(id), json)
+      {:error, reason} -> Logger.error("Failed to encode FSM #{inspect(id)} to JSON: #{inspect(reason)}")
+    end
+  end
+
+  defp delete_fsm_file(id) do
+    _ = File.rm(fsm_file_path(id))
+    :ok
+  end
+
+  defp load_state_from_json do
+    dir = data_dir()
+    case File.ls(dir) do
+      {:ok, files} ->
+        fsms =
+          files
+          |> Enum.filter(&String.ends_with?(&1, ".json"))
+          |> Enum.reduce(%{}, fn file, acc ->
+            path = Path.join(dir, file)
+            with {:ok, bin} <- File.read(path),
+                 {:ok, map} <- Jason.decode(bin),
+                 {:ok, {id, module, fsm}} <- deserialize_fsm_from_json(map) do
+              Map.put(acc, id, {module, fsm})
+            else
+              _ -> acc
+            end
+          end)
+
+        tenants =
+          fsms
+          |> Enum.reduce(%{}, fn {id, {module, fsm}}, acc ->
+            if fsm.tenant_id do
+              tenant_fsms = Map.get(acc, fsm.tenant_id, [])
+              Map.put(acc, fsm.tenant_id, [{id, module, fsm} | tenant_fsms])
+            else
+              acc
+            end
+          end)
+
+        modules =
+          fsms
+          |> Enum.reduce(%{}, fn {id, {module, fsm}}, acc ->
+            module_fsms = Map.get(acc, module, [])
+            Map.put(acc, module, [{id, fsm} | module_fsms])
+          end)
+
+        stats = %{
+          total_registered: map_size(fsms),
+          total_unregistered: 0,
+          current_count: map_size(fsms),
+          last_activity: DateTime.utc_now()
+        }
+
+        {:ok, %{fsms: fsms, tenants: tenants, modules: modules, stats: stats}}
+
+      {:error, _} -> :error
+    end
+  end
+
+  defp serialize_fsm_for_json(module, fsm) do
+    %{
+      id: fsm.id,
+      module: Atom.to_string(module),
+      tenant_id: fsm.tenant_id,
+      current_state: Atom.to_string(fsm.current_state),
+      data: sanitize_for_json(Map.delete(fsm.data || %{}, :timers)),
+      metadata: %{
+        created_at: datetime_to_iso8601(fsm.metadata.created_at),
+        updated_at: datetime_to_iso8601(fsm.metadata.updated_at),
+        version: fsm.metadata.version,
+        tags: fsm.metadata.tags
+      },
+      performance: %{
+        transition_count: fsm.performance.transition_count,
+        last_transition_at: datetime_to_iso8601(fsm.performance.last_transition_at),
+        avg_transition_time: fsm.performance.avg_transition_time
+      },
+      subscribers: fsm.subscribers,
+      plugins: Enum.map(fsm.plugins, fn {mod, opts} ->
+        %{
+          module: Atom.to_string(mod),
+          opts: sanitize_for_json(Enum.into(opts, %{}))
+        }
+      end)
+    }
+  end
+
+  # Deep sanitize any structure into JSON-friendly values (strings, numbers, booleans, null, arrays, objects)
+  defp sanitize_for_json(value) when is_map(value) do
+    value
+    |> Enum.map(fn {k, v} -> {to_string(k), sanitize_for_json(v)} end)
+    |> Enum.into(%{})
+  end
+  defp sanitize_for_json(value) when is_list(value) do
+    # Convert keyword lists or plain lists
+    cond do
+      Keyword.keyword?(value) ->
+        value
+        |> Enum.into(%{})
+        |> sanitize_for_json()
+      true -> Enum.map(value, &sanitize_for_json/1)
+    end
+  end
+  defp sanitize_for_json(value) when is_tuple(value) do
+    value
+    |> Tuple.to_list()
+    |> Enum.map(&sanitize_for_json/1)
+  end
+  defp sanitize_for_json(value) when is_atom(value) do
+    case value do
+      true -> true
+      false -> false
+      nil -> nil
+      _ -> Atom.to_string(value)
+    end
+  end
+  defp sanitize_for_json(%DateTime{} = dt), do: datetime_to_iso8601(dt)
+  defp sanitize_for_json(other), do: other
+
+  defp datetime_to_iso8601(nil), do: nil
+  defp datetime_to_iso8601(%DateTime{} = dt), do: DateTime.to_iso8601(dt)
+
+  defp deserialize_fsm_from_json(%{
+         "id" => id,
+         "module" => module_str,
+         "tenant_id" => tenant_id,
+         "current_state" => current_state_str,
+         "data" => data,
+         "metadata" => meta,
+         "performance" => perf,
+         "subscribers" => subscribers,
+         "plugins" => plugins
+       }) do
+    try do
+      module = String.to_existing_atom(module_str)
+      current_state = String.to_existing_atom(current_state_str)
+      created_at = parse_datetime(meta["created_at"])
+      updated_at = parse_datetime(meta["updated_at"])
+      last_transition_at = parse_datetime(perf["last_transition_at"])
+
+      fsm = struct(module, %{
+        id: id,
+        tenant_id: tenant_id,
+        current_state: current_state,
+        data: data || %{},
+        subscribers: subscribers || [],
+        plugins: Enum.map(plugins || [], fn
+          %{"module" => mod_str, "opts" => opts} -> {String.to_existing_atom(mod_str), json_opts_to_keyword(opts)}
+          [mod_str, opts] -> {String.to_existing_atom(mod_str), json_opts_to_keyword(opts)}
+        end),
+        metadata: %{
+          created_at: created_at,
+          updated_at: updated_at,
+          version: meta["version"],
+          tags: meta["tags"] || []
+        },
+        performance: %{
+          transition_count: perf["transition_count"] || 0,
+          last_transition_at: last_transition_at,
+          avg_transition_time: perf["avg_transition_time"] || 0
+        }
+      })
+
+      {:ok, {id, module, fsm}}
+    rescue
+      _ -> :error
+    end
+  end
+  defp deserialize_fsm_from_json(_), do: :error
+
+  defp json_opts_to_keyword(opts) when is_map(opts) do
+    opts
+    |> Enum.map(fn {k, v} ->
+      key_atom = safe_to_existing_atom(k)
+      {key_atom || String.to_atom(k), string_to_existing_atom_or_value(v)}
+    end)
+  end
+  defp json_opts_to_keyword(opts) when is_list(opts), do: Enum.map(opts, &string_to_existing_atom_or_value/1)
+  defp json_opts_to_keyword(other), do: other
+
+  defp string_to_existing_atom_or_value(v) when is_binary(v) do
+    try do
+      String.to_existing_atom(v)
+    rescue
+      _ -> v
+    end
+  end
+  defp string_to_existing_atom_or_value(v), do: v
+
+  defp safe_to_existing_atom(k) do
+    try do
+      String.to_existing_atom(to_string(k))
+    rescue
+      _ -> nil
+    end
+  end
+
+  defp parse_datetime(nil), do: nil
+  defp parse_datetime(str) when is_binary(str) do
+    case DateTime.from_iso8601(str) do
+      {:ok, dt, _} -> dt
+      _ -> nil
     end
   end
 end

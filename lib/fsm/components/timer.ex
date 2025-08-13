@@ -71,10 +71,9 @@ defmodule FSM.Components.Timer do
   # Utility functions that can be called from other FSMs
   @doc """
   Start a timer with the given name and duration.
+  Sends `{:timer_expired, timer_name}` to the calling process after duration.
   """
   def start_timer(timer_name, duration) do
-    # Implementation for starting the actual timer
-    # This would typically use Process.send_after or :timer.send_after
     timer_ref = Process.send_after(self(), {:timer_expired, timer_name}, duration)
     %{
       timer_name: timer_name,
@@ -83,6 +82,23 @@ defmodule FSM.Components.Timer do
       remaining_time: duration,
       timer_ref: timer_ref,
       callback: nil
+    }
+  end
+
+  @doc """
+  Start a timer that sends `{:timer_expired, timer_name, payload}` to the calling process.
+  Useful when you need to identify the target upon expiry.
+  """
+  def start_timer(timer_name, duration, payload) do
+    timer_ref = Process.send_after(self(), {:timer_expired, timer_name, payload}, duration)
+    %{
+      timer_name: timer_name,
+      duration: duration,
+      start_time: System.monotonic_time(:millisecond),
+      remaining_time: duration,
+      timer_ref: timer_ref,
+      callback: nil,
+      payload: payload
     }
   end
 

@@ -163,16 +163,20 @@ defmodule FSM.Manager do
       case FSM.Registry.get(fsm_id) do
         {:ok, {module, fsm}} ->
           # Send event to FSM
-          new_fsm = module.navigate(fsm, event, event_data)
+          case module.navigate(fsm, event, event_data) do
+            {:ok, new_fsm} ->
+              # Update FSM in registry
+              FSM.Registry.update(fsm_id, new_fsm)
 
-          # Update FSM in registry
-          FSM.Registry.update(fsm_id, new_fsm)
+              # Update stats
+              new_stats = %{state.stats | events_processed: state.stats.events_processed + 1}
 
-          # Update stats
-          new_stats = %{state.stats | events_processed: state.stats.events_processed + 1}
+              Logger.debug("Event sent to FSM #{inspect(fsm_id)}: #{inspect(event)}")
+              {:reply, {:ok, new_fsm}, %{state | stats: new_stats}}
 
-          Logger.debug("Event sent to FSM #{inspect(fsm_id)}: #{inspect(event)}")
-          {:reply, {:ok, new_fsm}, %{state | stats: new_stats}}
+            {:error, reason} ->
+              {:reply, {:error, reason}, state}
+          end
 
         {:error, :not_found} ->
           {:reply, {:error, :not_found}, state}

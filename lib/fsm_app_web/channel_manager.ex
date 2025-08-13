@@ -25,7 +25,7 @@ defmodule FSMAppWeb.ChannelManager do
 
   @impl true
   def handle_cast({:broadcast_to_channel, channel_id, event, payload}, state) do
-    Phoenix.PubSub.broadcast!(FSMApp.PubSub, "fsm:#{channel_id}", event, payload)
+    Phoenix.PubSub.broadcast!(FSMApp.PubSub, "fsm:#{channel_id}", %{event: event, payload: payload})
     {:noreply, state}
   end
 end
