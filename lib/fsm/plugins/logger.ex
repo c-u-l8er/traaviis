@@ -36,9 +36,11 @@ defmodule FSM.Plugins.Logger do
 
   # Helper function to get log level from FSM data
   defp get_log_level(fsm) do
-    case get_in(fsm.data, [:logger_config, :level]) do
-      nil -> :info
-      level -> level
+    data = Map.get(fsm, :data, %{})
+    logger_config = Map.get(data, :logger_config)
+    case logger_config do
+      %{} = cfg -> Map.get(cfg, :level, :info)
+      _ -> :info
     end
   end
 end

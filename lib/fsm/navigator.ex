@@ -52,7 +52,7 @@ defmodule FSM.Navigator do
   # Validation rules for state transitions
   defmacro validate(validation_fn) do
     quote do
-      @validations {unquote(validation_fn)}
+      @validations unquote(validation_fn)
     end
   end
 
@@ -159,50 +159,55 @@ defmodule FSM.Navigator do
         start_time = System.monotonic_time(:microsecond)
         old_state = fsm.current_state
 
-        # Validate transition
-        case validate_transition(fsm, event, event_data) do
-          {:ok, _} -> :ok
-          {:error, reason} ->
-            return_error(fsm, :validation_error, reason)
-        end
+        with {:ok, _} <- validate_transition(fsm, event, event_data) do
+          has_transition? = Enum.any?(unquote(Macro.escape(all_transitions)), fn {from, ev, _to, _opts} ->
+            from == old_state and ev == event
+          end)
 
-        # Apply pre-transition plugins
-        fsm = apply_plugins(fsm, :before_transition, {old_state, event, event_data})
+          if not has_transition? do
+            {:error, :invalid_transition}
+          else
+            # Apply pre-transition plugins
+            fsm = apply_plugins(fsm, :before_transition, {old_state, event, event_data})
 
-        # Execute on_exit hook for current state
-        fsm = execute_hook(fsm, :exit, old_state)
+            # Execute on_exit hook for current state
+            fsm = execute_hook(fsm, :exit, old_state)
 
-        # Perform the actual transition
-        new_fsm = do_navigate(fsm, event, event_data)
+            # Perform the actual transition
+            new_fsm = do_navigate(fsm, event, event_data)
 
-        # Execute on_enter hook for new state
-        new_fsm = execute_hook(new_fsm, :enter, new_fsm.current_state)
+            # Execute on_enter hook for new state
+            new_fsm = execute_hook(new_fsm, :enter, new_fsm.current_state)
 
-        # Apply post-transition plugins if state changed
-        new_fsm = if new_fsm.current_state != old_state do
-          new_fsm = apply_plugins(new_fsm, :after_transition, {old_state, new_fsm.current_state, event, event_data})
+            # Apply post-transition plugins if state changed
+            new_fsm = if new_fsm.current_state != old_state do
+              new_fsm = apply_plugins(new_fsm, :after_transition, {old_state, new_fsm.current_state, event, event_data})
 
-          # Update performance metrics
-          new_fsm = update_performance_metrics(new_fsm, start_time)
+              # Update performance metrics
+              new_fsm = update_performance_metrics(new_fsm, start_time)
 
-          # Publish state change event to subscribers
-          publish_event(new_fsm, :state_changed, %{
-            from: old_state,
-            to: new_fsm.current_state,
-            event: event,
-            data: event_data,
-            timestamp: DateTime.utc_now()
-          })
+              # Publish state change event to subscribers
+              publish_event(new_fsm, :state_changed, %{
+                from: old_state,
+                to: new_fsm.current_state,
+                event: event,
+                data: event_data,
+                timestamp: DateTime.utc_now()
+              })
 
-          # Persist state change
-          persist_state_change(new_fsm, old_state, event, event_data)
+              # Persist state change
+              persist_state_change(new_fsm, old_state, event, event_data)
 
-          new_fsm
+              new_fsm
+            else
+              new_fsm
+            end
+
+            {:ok, new_fsm}
+          end
         else
-          new_fsm
+          {:error, _reason} -> {:error, :validation_error}
         end
-
-        new_fsm
       end
 
       # Generated navigation functions
@@ -247,7 +252,7 @@ defmodule FSM.Navigator do
         case hook do
           {^hook_type, ^state, block} ->
             try do
-              {result, _} = Code.eval_quoted(block, [fsm: fsm])
+              {result, _} = Code.eval_quoted(block, [fsm: fsm], __ENV__)
               result
             rescue
               e ->
@@ -269,7 +274,7 @@ defmodule FSM.Navigator do
       defp apply_plugins(fsm, hook, data) do
         Enum.reduce(fsm.plugins, fsm, fn {plugin_module, opts}, acc_fsm ->
           if function_exported?(plugin_module, hook, 3) do
-            plugin_module.apply(hook, [acc_fsm, data, opts]) || acc_fsm
+            apply(plugin_module, hook, [acc_fsm, data, opts]) || acc_fsm
           else
             acc_fsm
           end
@@ -336,10 +341,10 @@ defmodule FSM.Navigator do
       end
 
       # Error handling
-      defp return_error(fsm, error_type, reason) do
+      defp return_error(_fsm, error_type, _reason) do
         require Logger
-        Logger.error("FSM navigation error: #{error_type} - #{inspect(reason)}")
-        {:error, {error_type, reason}}
+        Logger.error("FSM navigation error: #{error_type}")
+        {:error, error_type}
       end
 
       def visualize do

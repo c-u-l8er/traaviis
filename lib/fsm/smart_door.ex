@@ -15,13 +15,15 @@ defmodule FSM.SmartDoor do
     # Use the Timer component to start auto-close timer
     timer_data = FSM.Components.Timer.start_timer(:auto_close, 30000) # 30 seconds
     # Store timer data in FSM data
-    new_data = put_in(fsm.data[:timers][:auto_close], timer_data)
+    new_data = Map.update(fsm.data, :timers, %{auto_close: timer_data}, fn timers ->
+      Map.put(timers, :auto_close, timer_data)
+    end)
     %{fsm | data: new_data}
   end
 
   def reset_auto_close_timer(fsm) do
     # Reset the auto-close timer
-    case get_in(fsm.data, [:timers, :auto_close]) do
+    case fsm.data |> Map.get(:timers, %{}) |> Map.get(:auto_close) do
       %{timer_ref: timer_ref} when is_reference(timer_ref) ->
         FSM.Components.Timer.stop_timer(timer_ref)
         # Remove timer from FSM data
@@ -35,7 +37,9 @@ defmodule FSM.SmartDoor do
   def start_safety_timer(fsm) do
     # Start safety timer for closing operation
     timer_data = FSM.Components.Timer.start_timer(:safety_check, 5000) # 5 seconds
-    new_data = put_in(fsm.data[:timers][:safety_check], timer_data)
+    new_data = Map.update(fsm.data, :timers, %{safety_check: timer_data}, fn timers ->
+      Map.put(timers, :safety_check, timer_data)
+    end)
     %{fsm | data: new_data}
   end
 
@@ -99,9 +103,12 @@ defmodule FSM.SmartDoor do
   end
 
   # Handle events from other FSMs
-  def handle_external_event(fsm, SecuritySystem, :state_changed, %{to: :alarm}) do
+  def handle_external_event(fsm, :SecuritySystem, :state_changed, %{to: :alarm}) do
     # When security system goes to alarm, lock the door
-    navigate(fsm, :emergency_lock, %{reason: :security_alarm})
+    case navigate(fsm, :emergency_lock, %{reason: :security_alarm}) do
+      {:ok, new_fsm} -> new_fsm
+      {:error, _} -> fsm
+    end
   end
 
   def handle_external_event(fsm, _source, _event, _data), do: fsm
