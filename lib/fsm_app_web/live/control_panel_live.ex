@@ -55,6 +55,7 @@ defmodule FSMAppWeb.ControlPanelLive do
     end
 
     # Load initial data
+    _ = FSM.Registry.reload_from_disk()
     {:ok, fsms} = Manager.get_tenant_fsms(tenant_id)
     stats = get_tenant_stats(tenant_id)
     available_modules = get_available_modules()
@@ -111,6 +112,7 @@ defmodule FSMAppWeb.ControlPanelLive do
     end
 
     # Load initial data for the new tenant
+    _ = FSM.Registry.reload_from_disk()
     {:ok, fsms} = Manager.get_tenant_fsms(tenant_id)
     stats = get_tenant_stats(tenant_id)
     available_modules = get_available_modules()
@@ -270,6 +272,7 @@ defmodule FSMAppWeb.ControlPanelLive do
 
   def handle_event("refresh", _params, socket) do
     # Refresh FSM list
+    _ = FSM.Registry.reload_from_disk()
     {:ok, fsms} = Manager.get_tenant_fsms(socket.assigns.tenant_id)
     stats = get_tenant_stats(socket.assigns.tenant_id)
 

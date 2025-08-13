@@ -29,14 +29,28 @@ defmodule FSM.Factory do
           end
 
               "SecuritySystem" ->
-          # TODO: Implement SecuritySystem FSM
-          Logger.warning("SecuritySystem FSM not implemented yet")
-          {:error, :not_implemented}
+          try do
+            fsm_id = "security_system_#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}"
+            fsm = FSM.SecuritySystem.new(config_with_tenant, id: fsm_id, tenant_id: tenant_id)
+            Logger.info("SecuritySystem FSM created successfully with ID: #{fsm_id}")
+            {:ok, fsm}
+          rescue
+            e ->
+              Logger.error("Failed to create SecuritySystem FSM: #{inspect(e)}")
+              {:error, :creation_failed}
+          end
 
         "Timer" ->
-          # TODO: Implement Timer FSM
-          Logger.warning("Timer FSM not implemented yet")
-          {:error, :not_implemented}
+          try do
+            fsm_id = "timer_#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}"
+            fsm = FSM.Timer.new(config_with_tenant, id: fsm_id, tenant_id: tenant_id)
+            Logger.info("Timer FSM created successfully with ID: #{fsm_id}")
+            {:ok, fsm}
+          rescue
+            e ->
+              Logger.error("Failed to create Timer FSM: #{inspect(e)}")
+              {:error, :creation_failed}
+          end
 
       _ ->
         Logger.error("Unknown FSM module: #{module_name}")

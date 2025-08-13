@@ -80,6 +80,17 @@ defmodule FSM.Registry do
   end
 
   @doc """
+  Reload FSM registry state from persisted JSON files on disk.
+
+  Useful when new FSM JSON files are added to the `data/` directory while the
+  application is running, or when module names have changed and need remapping.
+  """
+  @spec reload_from_disk() :: :ok | {:error, term()}
+  def reload_from_disk() do
+    GenServer.call(__MODULE__, :reload_from_disk)
+  end
+
+  @doc """
   Broadcast an event to all FSMs or FSMs in a specific tenant.
   """
   @spec broadcast(term(), map(), tenant_id() | nil) :: :ok
@@ -265,6 +276,18 @@ defmodule FSM.Registry do
   @impl true
   def handle_call(:stats, _from, state) do
     {:reply, state.stats, state}
+  end
+
+  @impl true
+  def handle_call(:reload_from_disk, _from, _state) do
+    case load_state_from_json() do
+      {:ok, new_state} ->
+        require Logger
+        Logger.info("FSM.Registry reloaded state from disk (#{map_size(new_state.fsms)} fsms)")
+        {:reply, :ok, new_state}
+      :error ->
+        {:reply, {:error, :load_failed}, %{fsms: %{}, tenants: %{}, modules: %{}, stats: %{total_registered: 0, total_unregistered: 0, current_count: 0, last_activity: nil}}}
+    end
   end
 
   @impl true
@@ -463,7 +486,7 @@ defmodule FSM.Registry do
          "plugins" => plugins
        }) do
     try do
-      module = String.to_existing_atom(module_str)
+      module = resolve_module(module_str)
       current_state = String.to_existing_atom(current_state_str)
       created_at = parse_datetime(meta["created_at"])
       updated_at = parse_datetime(meta["updated_at"])
@@ -498,6 +521,42 @@ defmodule FSM.Registry do
     end
   end
   defp deserialize_fsm_from_json(_), do: :error
+
+  # Gracefully resolve module names from persisted JSON, handling historical names
+  # like "SecuritySystem" or "Elixir.SecuritySystem" by mapping them to
+  # namespaced modules under FSM.*.
+  defp resolve_module(module_str) when is_binary(module_str) do
+    # Try the exact module string first
+    try do
+      String.to_existing_atom(module_str)
+    rescue
+      _ ->
+        # Try remapping common core names into the FSM namespace
+        base =
+          module_str
+          |> String.replace_prefix("Elixir.", "")
+
+        candidate_names = [
+          "Elixir.FSM." <> base,
+          "Elixir." <> base
+        ]
+
+        Enum.find_value(candidate_names, fn name ->
+          try do
+            String.to_existing_atom(name)
+          rescue
+            _ -> nil
+          end
+        end) ||
+        # Last-chance explicit mappings for well-known cores
+        case base do
+          "SecuritySystem" -> FSM.SecuritySystem
+          "SmartDoor" -> FSM.SmartDoor
+          "Timer" -> FSM.Timer
+          _ -> raise ArgumentError
+        end
+    end
+  end
 
   defp json_opts_to_keyword(opts) when is_map(opts) do
     opts
