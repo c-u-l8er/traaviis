@@ -26,6 +26,9 @@ defmodule FSMApp.Application do
       # Start the Endpoint (http/https)
       FSMAppWeb.Endpoint,
 
+      # Task supervisor for async/supervised jobs (effects, broadcasts, callbacks)
+      {Task.Supervisor, name: FSM.TaskSupervisor},
+
       # Start the FSM Registry
       FSM.Registry,
 

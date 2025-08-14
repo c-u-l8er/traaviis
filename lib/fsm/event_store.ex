@@ -64,10 +64,14 @@ defmodule FSM.EventStore do
   defp events_root(tenant), do: Path.join(data_dir(), Path.join([tenant || "no_tenant", "events"]))
 
   defp append_record(record) do
-    with {:ok, json} <- Jason.encode(record),
+    with start <- System.monotonic_time(:microsecond),
+         {:ok, json} <- Jason.encode(record),
          path <- event_file_path(record),
          :ok <- File.mkdir_p(Path.dirname(path)),
          :ok <- File.write(path, json <> "\n", [:append]) do
+      :telemetry.execute([
+        :fsm, :event_store, :append
+      ], %{duration_us: System.monotonic_time(:microsecond) - start}, %{path: path, module: record.module, fsm_id: record.fsm_id, type: record.type})
       ensure_cache_table()
       true = :ets.insert(:fsm_event_store_cache, {record.fsm_id, record})
       :ok

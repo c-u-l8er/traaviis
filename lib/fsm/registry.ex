@@ -320,12 +320,13 @@ defmodule FSM.Registry do
 
     Enum.each(fsms_to_notify, fn {module, fsm} ->
       if function_exported?(module, :handle_broadcast_event, 3) do
-        spawn(fn ->
+        Task.Supervisor.start_child(FSM.TaskSupervisor, fn ->
           module.handle_broadcast_event(fsm, event_type, event_data)
         end)
       end
     end)
 
+    :telemetry.execute([:fsm, :broadcast], %{count: length(fsms_to_notify)}, %{event_type: event_type, tenant_id: tenant_id})
     Logger.debug("Broadcasted event #{inspect(event_type)} to #{length(fsms_to_notify)} FSMs")
     {:noreply, state}
   end
@@ -513,16 +514,27 @@ defmodule FSM.Registry do
       updated_at = parse_datetime(meta["updated_at"])
       last_transition_at = parse_datetime(perf["last_transition_at"])
 
-       fsm = struct(module, %{
+      fsm = struct(module, %{
         id: id,
         tenant_id: tenant_id,
         current_state: current_state,
         data: data || %{},
         subscribers: subscribers || [],
-        plugins: Enum.map(plugins || [], fn
-          %{"module" => mod_str, "opts" => opts} -> {String.to_existing_atom(mod_str), json_opts_to_keyword(opts)}
-          [mod_str, opts] -> {String.to_existing_atom(mod_str), json_opts_to_keyword(opts)}
-        end),
+          plugins: Enum.reduce(plugins || [], [], fn entry, acc ->
+            case entry do
+              %{"module" => mod_str, "opts" => opts} ->
+                case resolve_plugin_module(mod_str) do
+                  {:ok, mod} -> [{mod, json_opts_to_keyword(opts)} | acc]
+                  _ -> acc
+                end
+              [mod_str, opts] ->
+                case resolve_plugin_module(mod_str) do
+                  {:ok, mod} -> [{mod, json_opts_to_keyword(opts)} | acc]
+                  _ -> acc
+                end
+              _ -> acc
+            end
+          end) |> Enum.reverse(),
         metadata: %{
           created_at: created_at,
           updated_at: updated_at,
@@ -579,6 +591,33 @@ defmodule FSM.Registry do
     end
   end
 
+  # Resolve plugin modules safely without creating new atoms unless loaded
+  defp resolve_plugin_module(module_str) when is_binary(module_str) do
+    candidates =
+      [module_str]
+      |> Enum.map(fn s -> if String.starts_with?(s, "Elixir."), do: s, else: "Elixir." <> s end)
+      |> Enum.flat_map(fn base ->
+        [
+          base,
+          base |> String.replace_prefix("Elixir.", "Elixir.FSM.Plugins."),
+          "Elixir.FSM.Plugins." <> (base |> String.replace_prefix("Elixir.", ""))
+        ]
+      end)
+      |> Enum.uniq()
+
+    case Enum.find_value(candidates, fn cand ->
+           try do
+             mod = String.to_existing_atom(cand)
+             if Code.ensure_loaded?(mod), do: mod, else: nil
+           rescue
+             _ -> nil
+           end
+         end) do
+      nil -> :error
+      mod -> {:ok, mod}
+    end
+  end
+
   defp json_opts_to_keyword(opts) when is_map(opts) do
     opts
     |> Enum.map(fn {k, v} ->
@@ -632,5 +671,5 @@ defmodule FSM.Registry do
   defp id_to_string(ref) when is_reference(ref), do: inspect(ref)
   defp id_to_string(bin) when is_binary(bin), do: bin
   defp id_to_string(int) when is_integer(int), do: Integer.to_string(int)
-  defp id_to_string(other), do: inspect(other)
+  defp id_to_string(other), do: to_string(other)
 end

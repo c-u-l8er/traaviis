@@ -187,6 +187,11 @@ defmodule FSM.Navigator do
               new_fsm = update_performance_metrics(new_fsm, start_time)
 
             # Publish state change event to subscribers
+              :telemetry.execute([:fsm, :transition],
+                %{duration_us: System.monotonic_time(:microsecond) - start_time},
+                %{module: __MODULE__, from: old_state, to: new_fsm.current_state, event: event, tenant_id: new_fsm.tenant_id, fsm_id: new_fsm.id}
+              )
+
               publish_event(new_fsm, :state_changed, %{
                 from: old_state,
                 to: new_fsm.current_state,
@@ -313,9 +318,9 @@ defmodule FSM.Navigator do
         Enum.each(fsm.subscribers, fn subscriber_id ->
           case FSM.Registry.get(subscriber_id) do
             {:ok, {subscriber_module, subscriber_fsm}} ->
-              spawn(fn ->
-                subscriber_module.handle_external_event(subscriber_fsm, __MODULE__, event_type, event_data)
-              end)
+               Task.Supervisor.start_child(FSM.TaskSupervisor, fn ->
+                 subscriber_module.handle_external_event(subscriber_fsm, __MODULE__, event_type, event_data)
+               end)
             _ -> :ok
           end
         end)
