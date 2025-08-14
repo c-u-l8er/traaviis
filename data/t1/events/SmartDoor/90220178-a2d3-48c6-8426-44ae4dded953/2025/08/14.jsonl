@@ -1,0 +1,3 @@
+{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-14T01:17:33.680939Z","type":"created","seq":1,"initial_state":"closed","fsm_id":"90220178-a2d3-48c6-8426-44ae4dded953","tenant_id":"t1","initial_data":{"location":"test"}}
+{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-14T01:17:33.694444Z","type":"transition","seq":7,"to":"opening","from":"closed","fsm_id":"90220178-a2d3-48c6-8426-44ae4dded953","tenant_id":"t1","event_data":{},"event":"open_command"}
+{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-14T01:17:33.700033Z","type":"transition","seq":11,"to":"open","from":"opening","fsm_id":"90220178-a2d3-48c6-8426-44ae4dded953","tenant_id":"t1","event_data":{},"event":"fully_open"}

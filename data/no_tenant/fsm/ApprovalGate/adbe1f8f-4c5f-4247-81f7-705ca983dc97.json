@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "adbe1f8f-4c5f-4247-81f7-705ca983dc97",
+  "module": "Elixir.FSM.Safety.ApprovalGate",
+  "metadata": {
+    "version": 1,
+    "updated_at": "2025-08-14T01:10:05.470729Z",
+    "created_at": "2025-08-14T01:10:05.447880Z",
+    "tags": []
+  },
+  "plugins": [],
+  "tenant_id": null,
+  "current_state": "pending",
+  "performance": {
+    "transition_count": 0,
+    "last_transition_at": null,
+    "avg_transition_time": 0
+  },
+  "subscribers": []
+}

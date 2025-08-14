@@ -45,7 +45,8 @@ TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑
 ## 🛠️ Technology Stack
 
 - **Backend**: Elixir 1.14+, Phoenix 1.7+
-- **Database**: PostgreSQL with Ecto
+- **Storage (default)**: Filesystem (JSON/JSONL under `./data/`)
+- **Database (optional)**: PostgreSQL with Ecto (for accounts/tenancy, not required for FSM core)
 - **Real-time**: Phoenix Channels & LiveView
 - **MCP**: Hermes MCP library
 - **Frontend**: Tailwind CSS, Alpine.js
@@ -58,8 +59,8 @@ TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑
 ### Prerequisites
 - Elixir 1.14+
 - Erlang/OTP 24+
-- PostgreSQL 12+
 - Node.js 16+ (for assets)
+- PostgreSQL 12+ (optional — only if you enable DB-backed features)
 
 ### Quick Start
 
@@ -74,7 +75,8 @@ TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑
    mix deps.get
    ```
 
-3. **Setup database**
+3. **Setup database (optional)**
+   Only if you plan to use DB-backed features (accounts/tenancy models). The FSM core uses filesystem persistence by default.
    ```bash
    mix ecto.setup
    ```
@@ -93,6 +95,30 @@ TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑
 6. **Access the application**
    - Web Interface: http://localhost:4000
    - MCP Endpoint: http://localhost:4000/mcp
+
+## 📌 Project Status (Library + App)
+
+### Core library (`lib/fsm`)
+- Production-ready FSM DSL (`FSM.Navigator`) with states, transitions, hooks, validations, components, and plugins
+- FSM lifecycle and routing via `FSM.Manager` and `FSM.Registry` (multi-tenant aware)
+- Filesystem persistence by default:
+  - Snapshots: `./data/<tenant>/fsm/<Module>/<fsm_id>.json`
+  - Events (JSONL): `./data/<tenant>/events/<Module>/<fsm_id>/<YYYY>/<MM>/<DD>.jsonl`
+- Observability: `:telemetry` emitted for transitions, broadcasts, and event appends
+  - `[:fsm, :transition]` — transition timing and metadata
+  - `[:fsm, :broadcast]` — broadcast fan-out counts
+  - `[:fsm, :event_store, :append]` — event append durations
+- Reliability: async side-effects and callbacks executed under `FSM.TaskSupervisor` (no raw `spawn`)
+
+### Phoenix app (`lib/fsm_app`)
+- Supervises Registry, Manager, PubSub, Endpoint, Telemetry, `FSM.TaskSupervisor`, and TenantManager
+- LiveView control panel scaffolding and real-time updates via PubSub
+- DB present but optional; FSM core runs without Postgres
+
+### Roadmap highlights
+- Filesystem retention/compaction tools (optional; keep-days/size caps)
+- UI-programmable Effects and Guards (plugin) surfaced in Control Panel
+- Visual FSM builder (data-driven, versioned specs)
 
 ## 🔧 Configuration
 
@@ -273,11 +299,20 @@ mix test test/integration/
 
 ## 📊 Monitoring & Observability
 
-### Metrics
-- Prometheus metrics for all operations
-- Custom FSM performance metrics
-- WebSocket connection statistics
-- MCP operation metrics
+### Telemetry events
+You can subscribe to these events for metrics/alerts:
+
+```elixir
+:telemetry.attach_many("fsm-observer", [
+  [:fsm, :transition],
+  [:fsm, :broadcast],
+  [:fsm, :event_store, :append]
+], fn event, measurements, metadata, _ ->
+  IO.inspect({event, measurements, metadata}, label: "telemetry")
+end, nil)
+```
+
+Expose these via your preferred exporter (e.g., PromEx/Prometheus) if needed.
 
 ### Health Checks
 - FSM Registry health

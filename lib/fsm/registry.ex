@@ -315,7 +315,7 @@ defmodule FSM.Registry do
   def handle_cast({:broadcast, event_type, event_data, tenant_id}, state) do
     fsms_to_notify = case tenant_id do
       nil -> Map.values(state.fsms)
-      _ -> Map.get(state.tenants, tenant_id, []) |> Enum.map(fn {_id, _module, fsm} -> fsm end)
+      _ -> Map.get(state.tenants, tenant_id, []) |> Enum.map(fn {_id, module, fsm} -> {module, fsm} end)
     end
 
     Enum.each(fsms_to_notify, fn {module, fsm} ->
