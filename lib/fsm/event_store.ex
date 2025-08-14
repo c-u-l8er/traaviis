@@ -144,22 +144,42 @@ defmodule FSM.EventStore do
     pattern = Path.join([data_dir(), "**", "events", "**", safe, "**", "*.jsonl"])
     legacy = Path.join(Path.join(data_dir(), "events"), safe <> ".jsonl")
     files = (Path.wildcard(pattern, match_dot: true) ++ (if File.exists?(legacy), do: [legacy], else: []))
-    files
+    Logger.info("EventStore.list_events_from_fs: fsm_id=#{fsm_id_str}, safe=#{safe}")
+    Logger.info("EventStore.list_events_from_fs: pattern=#{pattern}")
+    Logger.info("EventStore.list_events_from_fs: found files=#{inspect(files)}")
+
+    events = files
     |> Enum.flat_map(fn path ->
+      Logger.info("EventStore.list_events_from_fs: processing file #{path}")
       try do
-        path
-        |> File.stream!([], 2048)
+                file_events = path
+        |> File.stream!([], :line)
         |> Enum.reduce([], fn line, acc ->
-          case Jason.decode(line) do
-            {:ok, map} -> [map | acc]
-            _ -> acc
+          # Trim whitespace and skip empty lines
+          trimmed_line = String.trim(line)
+          if trimmed_line != "" do
+            case Jason.decode(trimmed_line) do
+              {:ok, map} -> [map | acc]
+              {:error, reason} ->
+                Logger.warn("EventStore.list_events_from_fs: failed to decode line in #{path}: #{inspect(reason)}")
+                Logger.warn("EventStore.list_events_from_fs: problematic line: #{inspect(trimmed_line)}")
+                acc
+            end
+          else
+            acc
           end
         end)
         |> Enum.reverse()
+        Logger.info("EventStore.list_events_from_fs: file #{path} yielded #{length(file_events)} events")
+        file_events
       rescue
-        _ -> []
+        e ->
+          Logger.error("EventStore.list_events_from_fs: error processing #{path}: #{inspect(e)}")
+          []
       end
     end)
+    Logger.info("EventStore.list_events_from_fs: total events found: #{length(events)}")
+    events
   end
 
   defp module_short("Elixir." <> rest), do: module_short(rest)

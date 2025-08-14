@@ -220,11 +220,58 @@ defmodule FSMAppWeb.ControlPanelLive do
 
   def handle_event("select_fsm", %{"fsm_id" => fsm_id}, socket) do
     fsm = Enum.find(socket.assigns.fsms, fn f -> f.id == fsm_id end)
+    
+    # Debug: Log the selected FSM and available events
+    events = Map.get(socket.assigns.events_by_fsm, fsm_id, [])
+    Logger.info("Selected FSM: #{inspect(fsm_id)}, Events count: #{length(events)}")
+    Logger.info("Events by FSM keys: #{inspect(Map.keys(socket.assigns.events_by_fsm))}")
+    Logger.info("FSM object ID from struct: #{inspect(fsm && fsm.id)}")
+    
+    # Refresh events for this specific FSM
+    updated_events_by_fsm = if fsm do
+      case FSM.EventStore.list(fsm.id) do
+        {:ok, fresh_events} ->
+          entries =
+            fresh_events
+            |> Enum.map(fn ev ->
+              case ev do
+                %{"type" => "transition"} = t ->
+                  %{
+                    event: t["event"],
+                    from: t["from"],
+                    to: t["to"],
+                    data: t["event_data"],
+                    timestamp: parse_event_timestamp(t["timestamp"])
+                  }
+                %{"type" => "created"} = c ->
+                  %{
+                    event: "created",
+                    from: nil,
+                    to: c["initial_state"],
+                    data: c["initial_data"],
+                    timestamp: parse_event_timestamp(c["timestamp"])
+                  }
+                _ -> nil
+              end
+            end)
+            |> Enum.filter(& &1)
+          
+          Logger.info("Fresh events for FSM #{inspect(fsm.id)}: #{length(entries)}")
+          Map.put(socket.assigns.events_by_fsm, fsm.id, entries)
+        {:error, _reason} ->
+          Logger.warn("Failed to load events for FSM #{inspect(fsm.id)}")
+          socket.assigns.events_by_fsm
+      end
+    else
+      socket.assigns.events_by_fsm
+    end
+    
     {:noreply,
       assign(socket,
         selected_fsm: fsm,
         selected_event: nil,
-        selected_event_index: nil
+        selected_event_index: nil,
+        events_by_fsm: updated_events_by_fsm
       )}
   end
 
@@ -474,6 +521,7 @@ defmodule FSMAppWeb.ControlPanelLive do
           end
         end)
         |> Enum.filter(& &1)
+      Logger.info("Preloaded events for FSM #{inspect(fsm.id)}: #{length(entries)} events")
       Map.put(acc, fsm.id, entries)
     end)
   end
