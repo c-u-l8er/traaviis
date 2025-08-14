@@ -127,7 +127,7 @@ defmodule FSM.Navigator do
       ]
 
       def new(initial_data \\ %{}, opts \\ []) do
-        id = Keyword.get(opts, :id, make_ref())
+        id = Keyword.get(opts, :id, Ecto.UUID.generate())
         tenant_id = Keyword.get(opts, :tenant_id)
 
         fsm = %__MODULE__{
@@ -186,7 +186,7 @@ defmodule FSM.Navigator do
               # Update performance metrics
               new_fsm = update_performance_metrics(new_fsm, start_time)
 
-              # Publish state change event to subscribers
+            # Publish state change event to subscribers
               publish_event(new_fsm, :state_changed, %{
                 from: old_state,
                 to: new_fsm.current_state,
@@ -196,7 +196,7 @@ defmodule FSM.Navigator do
               })
 
               # Persist state change
-              persist_state_change(new_fsm, old_state, event, event_data)
+            persist_state_change(new_fsm, old_state, event, event_data)
 
               new_fsm
             else
@@ -325,17 +325,7 @@ defmodule FSM.Navigator do
 
       # Persistence
       defp persist_state_change(fsm, old_state, event, event_data) do
-        # This would typically save to a database or event store
-        # For now, we'll just log it
-        require Logger
-        Logger.info("FSM #{fsm.id} transitioned from #{old_state} to #{fsm.current_state} via #{event}")
-
-        # In production, you might want to:
-        # 1. Save to an event store
-        # 2. Update the FSM record in the database
-        # 3. Send to a message queue for processing
-        # 4. Update analytics/metrics
-
+        _ = FSM.EventStore.append_transition(__MODULE__, fsm, old_state, event, event_data)
         fsm
       end
 

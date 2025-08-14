@@ -69,6 +69,17 @@ defmodule FSMApp.MCP.Server do
       |> register_tool("get_server_stats",
         input_schema: %{},
         description: "Get overall server statistics and health information")
+      |> register_tool("get_fsm_events",
+        input_schema: %{
+          fsm_id: {:required, :string, description: "The ID of the FSM to fetch events for"}
+        },
+        description: "List persisted events for an FSM")
+      |> register_tool("replay_fsm",
+        input_schema: %{
+          fsm_id: {:required, :string, description: "The ID of the FSM to replay"},
+          until_seq: {:optional, :number, description: "Replay up to (and including) sequence number"}
+        },
+        description: "Recreate FSM by replaying its events deterministically")
       |> register_tool("validate_fsm_transition",
         input_schema: %{
           fsm_id: {:required, :string, description: "The ID of the FSM to validate"},
@@ -315,6 +326,38 @@ defmodule FSMApp.MCP.Server do
           details: inspect(e)
         }
         {:reply, result, frame}
+    end
+  end
+
+  def handle_tool("get_fsm_events", %{fsm_id: fsm_id}, frame) do
+    case FSM.EventStore.list(fsm_id) do
+      {:ok, events} -> {:reply, %{success: true, fsm_id: fsm_id, events: events}, frame}
+      {:error, reason} -> {:reply, %{success: false, error: "Failed to list events", details: inspect(reason)}, frame}
+    end
+  end
+
+  def handle_tool("replay_fsm", %{fsm_id: fsm_id} = params, frame) do
+    with {:ok, events} <- FSM.EventStore.list(fsm_id) do
+      until_seq = Map.get(params, :until_seq) || Map.get(params, "until_seq")
+      events = if until_seq, do: Enum.filter(events, &(&1["seq"] <= until_seq)), else: events
+      result = FSMApp.MCP.Server.ReplayHelper.replay(events)
+      {:reply, %{success: true, replay: result}, frame}
+    else
+      {:error, reason} -> {:reply, %{success: false, error: "Failed to replay", details: inspect(reason)}, frame}
+    end
+  end
+
+  defmodule ReplayHelper do
+    @moduledoc false
+    def replay(events) do
+      # Minimal deterministic fold for API response; real replay should reconstruct structs
+      Enum.reduce(events, %{state: nil, count: 0}, fn ev, acc ->
+        case ev["type"] do
+          "created" -> %{acc | state: ev["initial_state"], count: acc.count + 1}
+          "transition" -> %{acc | state: ev["to"], count: acc.count + 1}
+          _ -> acc
+        end
+      end)
     end
   end
 

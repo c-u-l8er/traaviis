@@ -264,7 +264,7 @@ defmodule FSM.Registry do
         }
 
         Logger.info("FSM unregistered: #{inspect(id)}")
-        delete_fsm_file(id)
+        delete_fsm_file(id, module, tenant_id)
         {:reply, :ok, new_state}
 
       nil -> {:reply, :ok, state}
@@ -358,77 +358,83 @@ defmodule FSM.Registry do
     end
   end
 
-  # JSON persistence helpers (./data/*.json)
+  # JSON persistence helpers (./data/<tenant>/fsm/<module>/<id>.json)
   defp data_dir, do: Path.expand("data")
+  defp legacy_dir, do: Path.expand("data")
 
-  defp fsm_file_path(id), do: Path.join(data_dir(), "#{id}.json")
+  defp fsm_file_path(id, module, tenant_id) do
+    tenant = sanitize_for_path(tenant_id || "no_tenant")
+    mod_short = module_short(module)
+    id_safe = sanitize_for_path(id_to_string(id))
+    dir = Path.join([data_dir(), tenant, "fsm", mod_short])
+    File.mkdir_p!(dir)
+    Path.join(dir, id_safe <> ".json")
+  end
 
   defp persist_fsm_to_file(id, module, fsm) do
-    File.mkdir_p!(data_dir())
     json_map = serialize_fsm_for_json(module, fsm)
     case Jason.encode(json_map, pretty: true) do
-      {:ok, json} -> File.write(fsm_file_path(id), json)
+      {:ok, json} -> File.write(fsm_file_path(id, module, fsm.tenant_id), json)
       {:error, reason} -> Logger.error("Failed to encode FSM #{inspect(id)} to JSON: #{inspect(reason)}")
     end
   end
 
-  defp delete_fsm_file(id) do
-    _ = File.rm(fsm_file_path(id))
+  defp delete_fsm_file(id, module, tenant_id) do
+    # Remove tenant-first path
+    _ = File.rm(fsm_file_path(id, module, tenant_id))
+    # Remove legacy flat file if present
+    _ = File.rm(Path.join(legacy_dir(), "#{id_to_string(id)}.json"))
     :ok
   end
 
   defp load_state_from_json do
-    dir = data_dir()
-    case File.ls(dir) do
-      {:ok, files} ->
-        fsms =
-          files
-          |> Enum.filter(&String.ends_with?(&1, ".json"))
-          |> Enum.reduce(%{}, fn file, acc ->
-            path = Path.join(dir, file)
-            with {:ok, bin} <- File.read(path),
-                 {:ok, map} <- Jason.decode(bin),
-                 {:ok, {id, module, fsm}} <- deserialize_fsm_from_json(map) do
-              Map.put(acc, id, {module, fsm})
-            else
-              _ -> acc
-            end
-          end)
+    legacy_files = if File.dir?(legacy_dir()), do: Path.wildcard(Path.join(legacy_dir(), "*.json")), else: []
+    new_files = if File.dir?(data_dir()), do: Path.wildcard(Path.join(data_dir(), "*/fsm/**/*.json")), else: []
+    files = legacy_files ++ new_files
 
-        tenants =
-          fsms
-          |> Enum.reduce(%{}, fn {id, {module, fsm}}, acc ->
-            if fsm.tenant_id do
-              tenant_fsms = Map.get(acc, fsm.tenant_id, [])
-              Map.put(acc, fsm.tenant_id, [{id, module, fsm} | tenant_fsms])
-            else
-              acc
-            end
-          end)
+    fsms =
+      files
+      |> Enum.reduce(%{}, fn path, acc ->
+        with {:ok, bin} <- File.read(path),
+             {:ok, map} <- Jason.decode(bin),
+             {:ok, {id, module, fsm}} <- deserialize_fsm_from_json(map) do
+          Map.put(acc, id, {module, fsm})
+        else
+          _ -> acc
+        end
+      end)
 
-        modules =
-          fsms
-          |> Enum.reduce(%{}, fn {id, {module, fsm}}, acc ->
-            module_fsms = Map.get(acc, module, [])
-            Map.put(acc, module, [{id, fsm} | module_fsms])
-          end)
+    tenants =
+      fsms
+      |> Enum.reduce(%{}, fn {id, {module, fsm}}, acc ->
+        if fsm.tenant_id do
+          tenant_fsms = Map.get(acc, fsm.tenant_id, [])
+          Map.put(acc, fsm.tenant_id, [{id, module, fsm} | tenant_fsms])
+        else
+          acc
+        end
+      end)
 
-        stats = %{
-          total_registered: map_size(fsms),
-          total_unregistered: 0,
-          current_count: map_size(fsms),
-          last_activity: DateTime.utc_now()
-        }
+    modules =
+      fsms
+      |> Enum.reduce(%{}, fn {id, {module, fsm}}, acc ->
+        module_fsms = Map.get(acc, module, [])
+        Map.put(acc, module, [{id, fsm} | module_fsms])
+      end)
 
-        {:ok, %{fsms: fsms, tenants: tenants, modules: modules, stats: stats}}
+    stats = %{
+      total_registered: map_size(fsms),
+      total_unregistered: 0,
+      current_count: map_size(fsms),
+      last_activity: DateTime.utc_now()
+    }
 
-      {:error, _} -> :error
-    end
+    {:ok, %{fsms: fsms, tenants: tenants, modules: modules, stats: stats}}
   end
 
   defp serialize_fsm_for_json(module, fsm) do
     %{
-      id: fsm.id,
+      id: id_to_string(fsm.id),
       module: Atom.to_string(module),
       tenant_id: fsm.tenant_id,
       current_state: Atom.to_string(fsm.current_state),
@@ -507,7 +513,7 @@ defmodule FSM.Registry do
       updated_at = parse_datetime(meta["updated_at"])
       last_transition_at = parse_datetime(perf["last_transition_at"])
 
-      fsm = struct(module, %{
+       fsm = struct(module, %{
         id: id,
         tenant_id: tenant_id,
         current_state: current_state,
@@ -530,7 +536,7 @@ defmodule FSM.Registry do
         }
       })
 
-      {:ok, {id, module, fsm}}
+       {:ok, {id, module, fsm}}
     rescue
       _ -> :error
     end
@@ -607,4 +613,24 @@ defmodule FSM.Registry do
       _ -> nil
     end
   end
+
+  defp module_short(module) when is_atom(module) do
+    module
+    |> Atom.to_string()
+    |> String.replace_prefix("Elixir.", "")
+    |> String.split(".")
+    |> List.last()
+  end
+
+  defp sanitize_for_path(nil), do: ""
+  defp sanitize_for_path(str) when is_binary(str) do
+    str
+    |> String.replace(~r/[^a-zA-Z0-9_\-]+/, "_")
+    |> String.trim("_")
+  end
+
+  defp id_to_string(ref) when is_reference(ref), do: inspect(ref)
+  defp id_to_string(bin) when is_binary(bin), do: bin
+  defp id_to_string(int) when is_integer(int), do: Integer.to_string(int)
+  defp id_to_string(other), do: inspect(other)
 end

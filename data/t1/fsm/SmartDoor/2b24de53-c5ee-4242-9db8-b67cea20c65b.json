@@ -1,0 +1,33 @@
+{
+  "data": {
+    "location": "test"
+  },
+  "id": "2b24de53-c5ee-4242-9db8-b67cea20c65b",
+  "module": "Elixir.FSM.SmartDoor",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T00:03:26.984627Z",
+    "updated_at": "2025-08-14T00:03:27.004414Z",
+    "tags": []
+  },
+  "plugins": [
+    {
+      "module": "Elixir.FSM.Plugins.Logger",
+      "opts": {
+        "level": "debug"
+      }
+    },
+    {
+      "module": "Elixir.FSM.Plugins.Audit",
+      "opts": {}
+    }
+  ],
+  "tenant_id": "t1",
+  "current_state": "closed",
+  "performance": {
+    "transition_count": 0,
+    "last_transition_at": null,
+    "avg_transition_time": 0
+  },
+  "subscribers": []
+}

@@ -115,6 +115,9 @@ defmodule FSM.Manager do
       # Create FSM with configuration
       fsm = module.new(config, tenant_id: tenant_id)
 
+      # Persist creation event
+      _ = FSM.EventStore.append_created(module, fsm, config)
+
       # Update stats
       new_stats = %{state.stats | fsms_created: state.stats.fsms_created + 1}
 

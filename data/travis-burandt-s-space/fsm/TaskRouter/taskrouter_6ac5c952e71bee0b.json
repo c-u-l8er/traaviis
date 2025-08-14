@@ -1,0 +1,22 @@
+{
+  "data": {
+    "tenant_id": "travis-burandt-s-space"
+  },
+  "id": "taskrouter_6ac5c952e71bee0b",
+  "module": "Elixir.FSM.Orchestrators.TaskRouter",
+  "metadata": {
+    "version": 1,
+    "updated_at": "2025-08-14T00:06:31.779241Z",
+    "created_at": "2025-08-14T00:06:15.136713Z",
+    "tags": []
+  },
+  "plugins": [],
+  "tenant_id": "travis-burandt-s-space",
+  "current_state": "acked",
+  "performance": {
+    "transition_count": 3,
+    "last_transition_at": "2025-08-14T00:06:31.779257Z",
+    "avg_transition_time": 29.0
+  },
+  "subscribers": []
+}

@@ -1,0 +1,1 @@
+{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-14T00:03:27.201867Z","type":"transition","seq":99,"to":"opening","from":"closed","fsm_id":"tenant1_fsm","tenant_id":"tenant1","event":"open_command","event_data":{"user_id":"user1"}}
