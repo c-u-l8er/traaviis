@@ -72,5 +72,3 @@ defmodule FSMApp.Storage.FSStore do
     Path.join([@data_root, namespace, ".#{collection}.tmp"]) |> Path.expand()
   end
 end
-
-

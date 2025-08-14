@@ -74,7 +74,7 @@ defmodule FSMApp.Accounts do
       hashed_password: map["hashed_password"],
       confirmed_at: map["confirmed_at"],
       inserted_at: normalize_ts(map["inserted_at"]),
-      updated_at: normalize_ts(map["updated_at"]) 
+      updated_at: normalize_ts(map["updated_at"])
     }
   end
 
