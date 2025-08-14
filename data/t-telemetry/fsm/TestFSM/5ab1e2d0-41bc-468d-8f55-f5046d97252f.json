@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "5ab1e2d0-41bc-468d-8f55-f5046d97252f",
+  "module": "Elixir.FSM.HardeningTest.TestFSM",
+  "metadata": {
+    "version": 1,
+    "updated_at": "2025-08-14T01:54:51.726719Z",
+    "tags": [],
+    "created_at": "2025-08-14T01:54:51.724864Z"
+  },
+  "plugins": [],
+  "tenant_id": "t-telemetry",
+  "current_state": "active",
+  "performance": {
+    "avg_transition_time": 12.0,
+    "last_transition_at": "2025-08-14T01:54:51.726725Z",
+    "transition_count": 1
+  },
+  "subscribers": []
+}

@@ -1,13 +1,6 @@
 import Config
 
-# Configure your database
-config :fsm_app, FSMApp.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "fsm_app_test",
-  pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10
+# Database disabled in test: using filesystem-backed persistence
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.

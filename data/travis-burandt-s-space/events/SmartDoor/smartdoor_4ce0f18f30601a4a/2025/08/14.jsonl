@@ -1,3 +1,0 @@
-{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-14T00:17:48.524857Z","type":"transition","seq":1,"to":"opening","from":"closed","event":"open_command","tenant_id":"travis-burandt-s-space","fsm_id":"smartdoor_4ce0f18f30601a4a","event_data":{}}
-{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-14T00:22:13.340951Z","type":"transition","seq":5,"to":"closed","from":"opening","tenant_id":"travis-burandt-s-space","event_data":{},"fsm_id":"smartdoor_4ce0f18f30601a4a","event":"obstruction"}
-{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-14T00:22:29.529528Z","type":"transition","seq":6,"to":"opening","from":"closed","tenant_id":"travis-burandt-s-space","event_data":{},"fsm_id":"smartdoor_4ce0f18f30601a4a","event":"open_command"}

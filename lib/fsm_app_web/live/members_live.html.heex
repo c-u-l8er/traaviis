@@ -1,11 +1,13 @@
 <div class="space-y-4">
   <div>
     <label class="block text-sm text-gray-700">Tenant</label>
-    <select phx-change="select_tenant" name="tenant_id" class="mt-1 block w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-      <%= for t <- @tenants do %>
-        <option value={t.id}><%= t.name %></option>
-      <% end %>
-    </select>
+    <form phx-change="select_tenant">
+      <select name="tenant_id" class="mt-1 block w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        <%= for t <- @tenants do %>
+          <option value={t.id} selected={@selected_tenant_id == t.id}><%= t.name %></option>
+        <% end %>
+      </select>
+    </form>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
     <div class="md:col-span-1 border-r pr-4 overflow-y-auto">

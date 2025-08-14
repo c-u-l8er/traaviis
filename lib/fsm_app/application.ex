@@ -17,8 +17,7 @@ defmodule FSMApp.Application do
       # Start the Telemetry supervisor
       FSMAppWeb.Telemetry,
 
-      # Start the Ecto repository
-      FSMApp.Repo,
+      # Database repository removed (filesystem-backed persistence in use)
 
       # Start the PubSub system
       {Phoenix.PubSub, name: FSMApp.PubSub},

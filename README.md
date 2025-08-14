@@ -45,8 +45,7 @@ TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑
 ## 🛠️ Technology Stack
 
 - **Backend**: Elixir 1.14+, Phoenix 1.7+
-- **Storage (default)**: Filesystem (JSON/JSONL under `./data/`)
-- **Database (optional)**: PostgreSQL with Ecto (for accounts/tenancy, not required for FSM core)
+- **Storage**: Filesystem (JSON/JSONL under `./data/`) — no database required
 - **Real-time**: Phoenix Channels & LiveView
 - **MCP**: Hermes MCP library
 - **Frontend**: Tailwind CSS, Alpine.js
@@ -60,7 +59,7 @@ TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑
 - Elixir 1.14+
 - Erlang/OTP 24+
 - Node.js 16+ (for assets)
-- PostgreSQL 12+ (optional — only if you enable DB-backed features)
+  
 
 ### Quick Start
 
@@ -75,11 +74,7 @@ TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑
    mix deps.get
    ```
 
-3. **Setup database (optional)**
-   Only if you plan to use DB-backed features (accounts/tenancy models). The FSM core uses filesystem persistence by default.
-   ```bash
-   mix ecto.setup
-   ```
+3. Database setup is not required. Accounts and tenancy are filesystem-backed.
 
 4. **Install and build assets**
    ```bash
@@ -124,8 +119,8 @@ TRAAVIIS gives your agents deterministic control, safety guardrails, and real‑
 
 ### Environment Variables
 ```bash
-# Database
-export DATABASE_URL="postgresql://user:password@localhost/fsm_app"
+# Database: not used
+# export DATABASE_URL="postgresql://user:password@localhost/fsm_app"
 
 # MCP Configuration
 export MCP_SERVER_ENABLED=true

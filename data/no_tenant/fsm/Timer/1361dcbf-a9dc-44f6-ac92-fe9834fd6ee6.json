@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "1361dcbf-a9dc-44f6-ac92-fe9834fd6ee6",
+  "module": "Elixir.FSM.Components.Timer",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T01:32:56.316488Z",
+    "tags": [],
+    "updated_at": "2025-08-14T01:32:56.316502Z"
+  },
+  "plugins": [],
+  "subscribers": [],
+  "current_state": "idle",
+  "performance": {
+    "avg_transition_time": 0,
+    "last_transition_at": null,
+    "transition_count": 0
+  },
+  "tenant_id": null
+}

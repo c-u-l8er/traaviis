@@ -1,14 +1,6 @@
 import Config
 
-# Configure your database
-config :fsm_app, FSMApp.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "fsm_app_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+# Database disabled in dev: using filesystem-backed persistence
 
 # Configure your endpoint
 config :fsm_app, FSMAppWeb.Endpoint,

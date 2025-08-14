@@ -6,19 +6,24 @@ defmodule FSMAppWeb.MembersLive do
   alias FSMApp.Tenancy
 
   def mount(_params, _session, socket) do
-    tenants = Tenancy.list_tenants()
-    members = case tenants do
-      [t | _] -> Tenancy.list_members(t.id)
-      _ -> []
+    tenants = assigned_tenants(socket)
+    {selected_tenant_id, members} = case tenants do
+      [%{id: tid} | _] -> {tid, Tenancy.list_members(tid)}
+      _ -> {nil, []}
     end
-    {:ok, assign(socket, page_title: "Members", tenants: tenants, list: members, selected: nil)}
+    {:ok, assign(socket, page_title: "Members", tenants: tenants, selected_tenant_id: selected_tenant_id, list: members, selected: nil)}
   end
 
   def handle_event("select_tenant", %{"tenant_id" => id}, socket) do
-    {:noreply, assign(socket, list: Tenancy.list_members(id), selected: nil)}
+    {:noreply, assign(socket, selected_tenant_id: id, list: Tenancy.list_members(id), selected: nil)}
   end
 
   def handle_event("select", %{"id" => id}, socket) do
     {:noreply, assign(socket, selected: Enum.find(socket.assigns.list, &(&1.id == id)))}
+  end
+
+  defp assigned_tenants(%{assigns: %{current_user: nil}}), do: []
+  defp assigned_tenants(%{assigns: %{current_user: current_user}}) do
+    Tenancy.list_user_tenants(current_user.id)
   end
 end

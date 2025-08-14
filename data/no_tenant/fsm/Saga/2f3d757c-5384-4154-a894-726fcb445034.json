@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "2f3d757c-5384-4154-a894-726fcb445034",
+  "module": "Elixir.FSM.Orchestrators.Saga",
+  "metadata": {
+    "version": 1,
+    "updated_at": "2025-08-14T01:54:51.348145Z",
+    "tags": [],
+    "created_at": "2025-08-14T01:54:51.330376Z"
+  },
+  "plugins": [],
+  "tenant_id": null,
+  "current_state": "planning",
+  "performance": {
+    "avg_transition_time": 0,
+    "last_transition_at": null,
+    "transition_count": 0
+  },
+  "subscribers": []
+}

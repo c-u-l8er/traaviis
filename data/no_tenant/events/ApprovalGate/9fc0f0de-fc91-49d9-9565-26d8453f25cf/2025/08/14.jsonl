@@ -1,0 +1,1 @@
+{"module":"Elixir.FSM.Safety.ApprovalGate","timestamp":"2025-08-14T01:54:51.350573Z","type":"transition","seq":1,"to":"approved","from":"pending","tenant_id":null,"fsm_id":"9fc0f0de-fc91-49d9-9565-26d8453f25cf","event_data":{},"event":"approve"}

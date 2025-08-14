@@ -2,9 +2,7 @@
 # and its dependencies with the aid of the Config module.
 import Config
 
-# Configure Ecto
-config :fsm_app,
-  ecto_repos: [FSMApp.Repo]
+# Database disabled: using filesystem-backed persistence
 
 # Configure esbuild (the version is required)
 config :esbuild,
