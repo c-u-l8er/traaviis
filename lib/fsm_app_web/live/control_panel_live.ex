@@ -70,6 +70,7 @@ defmodule FSMAppWeb.ControlPanelLive do
     {:ok, fsms} = Manager.get_tenant_fsms(tenant_id)
     stats = get_tenant_stats(tenant_id)
     available_modules = get_available_modules()
+    events_by_fsm = preload_events_for_fsms(fsms)
 
     socket = assign(socket,
       tenant_id: tenant_id,
@@ -79,7 +80,7 @@ defmodule FSMAppWeb.ControlPanelLive do
       selected_fsm: nil,
       selected_event: nil,
       selected_event_index: nil,
-      events_by_fsm: %{},
+      events_by_fsm: events_by_fsm,
       show_create_modal: false,
       show_event_modal: false,
       selected_module: nil,
@@ -135,6 +136,7 @@ defmodule FSMAppWeb.ControlPanelLive do
     {:ok, fsms} = Manager.get_tenant_fsms(tenant_id)
     stats = get_tenant_stats(tenant_id)
     available_modules = get_available_modules()
+    events_by_fsm = preload_events_for_fsms(fsms)
 
     socket = assign(socket,
       tenant_id: tenant_id,
@@ -144,7 +146,7 @@ defmodule FSMAppWeb.ControlPanelLive do
       selected_fsm: nil,
       selected_event: nil,
       selected_event_index: nil,
-      events_by_fsm: %{},
+      events_by_fsm: events_by_fsm,
       show_create_modal: false,
       show_event_modal: false,
       selected_module: nil,
@@ -329,10 +331,11 @@ defmodule FSMAppWeb.ControlPanelLive do
     _ = FSM.Registry.reload_from_disk()
     {:ok, fsms} = Manager.get_tenant_fsms(socket.assigns.tenant_id)
     stats = get_tenant_stats(socket.assigns.tenant_id)
+    events_by_fsm = preload_events_for_fsms(fsms)
 
     {:noreply,
       socket
-      |> assign(fsms: fsms, stats: stats)
+      |> assign(fsms: fsms, stats: stats, events_by_fsm: events_by_fsm)
       |> put_flash(:info, "Data refreshed")}
   end
 
@@ -444,6 +447,45 @@ defmodule FSMAppWeb.ControlPanelLive do
   end
 
   # Private functions
+  defp preload_events_for_fsms(fsms) do
+    Enum.reduce(fsms, %{}, fn fsm, acc ->
+      {:ok, events} = FSM.EventStore.list(fsm.id)
+      entries =
+        events
+        |> Enum.map(fn ev ->
+          case ev do
+            %{"type" => "transition"} = t ->
+              %{
+                event: t["event"],
+                from: t["from"],
+                to: t["to"],
+                data: t["event_data"],
+                timestamp: parse_event_timestamp(t["timestamp"])
+              }
+            %{"type" => "created"} = c ->
+              %{
+                event: "created",
+                from: nil,
+                to: c["initial_state"],
+                data: c["initial_data"],
+                timestamp: parse_event_timestamp(c["timestamp"])
+              }
+            _ -> nil
+          end
+        end)
+        |> Enum.filter(& &1)
+      Map.put(acc, fsm.id, entries)
+    end)
+  end
+
+  defp parse_event_timestamp(%DateTime{} = dt), do: dt
+  defp parse_event_timestamp(ts) when is_binary(ts) do
+    case DateTime.from_iso8601(ts) do
+      {:ok, dt, _} -> dt
+      _ -> DateTime.utc_now()
+    end
+  end
+  defp parse_event_timestamp(_), do: DateTime.utc_now()
   defp assigned_tenants(%{assigns: %{current_user: nil}}), do: []
   defp assigned_tenants(%{assigns: %{current_user: current_user}}) do
     Tenancy.list_user_tenants(current_user.id)
