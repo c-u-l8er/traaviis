@@ -161,8 +161,8 @@ defmodule FSM.EventStore do
             case Jason.decode(trimmed_line) do
               {:ok, map} -> [map | acc]
               {:error, reason} ->
-                Logger.warn("EventStore.list_events_from_fs: failed to decode line in #{path}: #{inspect(reason)}")
-                Logger.warn("EventStore.list_events_from_fs: problematic line: #{inspect(trimmed_line)}")
+                Logger.warning("EventStore.list_events_from_fs: failed to decode line in #{path}: #{inspect(reason)}")
+                Logger.warning("EventStore.list_events_from_fs: problematic line: #{inspect(trimmed_line)}")
                 acc
             end
           else

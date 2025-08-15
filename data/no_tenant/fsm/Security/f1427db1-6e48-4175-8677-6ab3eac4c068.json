@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "f1427db1-6e48-4175-8677-6ab3eac4c068",
+  "module": "Elixir.FSM.Components.Security",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T20:04:43.119088Z",
+    "tags": [],
+    "updated_at": "2025-08-14T20:04:43.119097Z"
+  },
+  "plugins": [],
+  "subscribers": [],
+  "current_state": "unlocked",
+  "performance": {
+    "avg_transition_time": 0,
+    "last_transition_at": null,
+    "transition_count": 0
+  },
+  "tenant_id": null
+}

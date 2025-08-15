@@ -1,0 +1,3 @@
+{"module":"Elixir.FSM.Safety.BudgetGuard","timestamp":"2025-08-14T20:19:55.751685Z","type":"transition","seq":4,"to":"warn","from":"green","event":"threshold_reached","tenant_id":null,"fsm_id":"7878138c-a567-409b-af22-a0b5eaf9ab27","event_data":{}}
+{"module":"Elixir.FSM.Safety.BudgetGuard","timestamp":"2025-08-14T20:19:55.760721Z","type":"transition","seq":10,"to":"blocked","from":"warn","event":"exceeded","tenant_id":null,"fsm_id":"7878138c-a567-409b-af22-a0b5eaf9ab27","event_data":{}}
+{"module":"Elixir.FSM.Safety.BudgetGuard","timestamp":"2025-08-14T20:19:55.762822Z","type":"transition","seq":15,"to":"green","from":"blocked","event":"reset","tenant_id":null,"fsm_id":"7878138c-a567-409b-af22-a0b5eaf9ab27","event_data":{}}

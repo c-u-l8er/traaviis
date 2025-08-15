@@ -66,7 +66,7 @@ defmodule FSM.Plugins.LoggerTest do
     end
 
     test "handles various log levels" do
-      levels = [:debug, :info, :warn, :error]
+      levels = [:debug, :info, :warning, :error]
 
       Enum.each(levels, fn level ->
         fsm = %{id: "test_fsm", data: %{logger_config: %{level: level}}}

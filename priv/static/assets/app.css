@@ -1401,10 +1401,6 @@ select {
   --tw-gradient-stops: var(--tw-gradient-from), #dbeafe var(--tw-gradient-via-position), var(--tw-gradient-to);
 }
 
-.to-blue-100 {
-  --tw-gradient-to: #dbeafe var(--tw-gradient-to-position);
-}
-
 .to-blue-600 {
   --tw-gradient-to: #2563eb var(--tw-gradient-to-position);
 }
@@ -1435,6 +1431,10 @@ select {
 
 .to-violet-50 {
   --tw-gradient-to: #f5f3ff var(--tw-gradient-to-position);
+}
+
+.to-yellow-100 {
+  --tw-gradient-to: #fef9c3 var(--tw-gradient-to-position);
 }
 
 .to-yellow-50 {
@@ -1768,10 +1768,6 @@ select {
   opacity: 0.25;
 }
 
-.opacity-75 {
-  opacity: 0.75;
-}
-
 .opacity-80 {
   opacity: 0.8;
 }
@@ -1816,10 +1812,6 @@ select {
 .ring-blue-200 {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(191 219 254 / var(--tw-ring-opacity));
-}
-
-.ring-blue-700\/10 {
-  --tw-ring-color: rgb(29 78 216 / 0.1);
 }
 
 .ring-gray-200 {
@@ -1879,6 +1871,53 @@ select {
 }
 
 /* Custom styles can go here */
+
+.header {
+  background: #000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 0;
+  z-index: 1000;
+  /* Ensure header stays on top */
+  font-family:
+            Courier New,
+            monospace;
+  line-height: 1.2;
+}
+
+.header a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.domain-nav {
+  background: #000;
+  color: #ccc;
+  margin-bottom: 0;
+}
+
+.domain-container {
+  width: 1250px;
+  margin: 0 auto;
+  padding: 4px;
+  font-size: 16px;
+  text-align: left;
+}
+
+.domain-nav a {
+  color: #ccc !important;
+  font-size: 1em !important;
+  font-weight: normal !important;
+  margin: 0 !important;
+}
+
+.domain-nav a:hover {
+  color: #fff !important;
+  text-decoration: underline;
+}
 
 .hover\:bg-blue-700:hover {
   --tw-bg-opacity: 1;

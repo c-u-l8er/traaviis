@@ -120,21 +120,8 @@ defmodule FSM.Registry do
 
   @impl true
   def init(_) do
-    case load_state_from_json() do
-      {:ok, state} -> {:ok, state}
-      :error ->
-        {:ok, %{
-          fsms: %{},
-          tenants: %{},
-          modules: %{},
-          stats: %{
-            total_registered: 0,
-            total_unregistered: 0,
-            current_count: 0,
-            last_activity: nil
-          }
-        }}
-    end
+    {:ok, state} = load_state_from_json()
+    {:ok, state}
   end
 
   @impl true
@@ -295,14 +282,10 @@ defmodule FSM.Registry do
 
   @impl true
   def handle_call(:reload_from_disk, _from, _state) do
-    case load_state_from_json() do
-      {:ok, new_state} ->
-        require Logger
-        Logger.info("FSM.Registry reloaded state from disk (#{map_size(new_state.fsms)} fsms)")
-        {:reply, :ok, new_state}
-      :error ->
-        {:reply, {:error, :load_failed}, %{fsms: %{}, tenants: %{}, modules: %{}, stats: %{total_registered: 0, total_unregistered: 0, current_count: 0, last_activity: nil}}}
-    end
+    {:ok, new_state} = load_state_from_json()
+    require Logger
+    Logger.info("FSM.Registry reloaded state from disk (#{map_size(new_state.fsms)} fsms)")
+    {:reply, :ok, new_state}
   end
 
   @impl true

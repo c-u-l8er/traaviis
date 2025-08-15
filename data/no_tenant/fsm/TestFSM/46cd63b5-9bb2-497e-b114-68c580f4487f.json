@@ -1,0 +1,22 @@
+{
+  "data": {
+    "permission": "granted"
+  },
+  "id": "46cd63b5-9bb2-497e-b114-68c580f4487f",
+  "module": "Elixir.FSM.NavigatorTest.TestFSM",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T18:56:46.010705Z",
+    "updated_at": "2025-08-14T18:56:46.010716Z",
+    "tags": []
+  },
+  "plugins": [],
+  "current_state": "idle",
+  "performance": {
+    "transition_count": 0,
+    "last_transition_at": null,
+    "avg_transition_time": 0
+  },
+  "subscribers": [],
+  "tenant_id": null
+}

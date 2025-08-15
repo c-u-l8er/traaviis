@@ -1,0 +1,2 @@
+{"module":"Elixir.FSM.Orchestrators.Saga","timestamp":"2025-08-14T19:49:05.266787Z","type":"transition","seq":2,"to":"running","from":"planning","fsm_id":"9105e0e2-b6d6-4dda-9fc2-b4a54839136c","event_data":{},"tenant_id":null,"event":"start"}
+{"module":"Elixir.FSM.Orchestrators.Saga","timestamp":"2025-08-14T19:49:05.269430Z","type":"transition","seq":10,"to":"completed","from":"running","fsm_id":"9105e0e2-b6d6-4dda-9fc2-b4a54839136c","event_data":{},"tenant_id":null,"event":"all_steps_done"}

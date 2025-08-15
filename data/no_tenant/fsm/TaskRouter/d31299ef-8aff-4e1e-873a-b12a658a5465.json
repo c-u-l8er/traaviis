@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "d31299ef-8aff-4e1e-873a-b12a658a5465",
+  "module": "Elixir.FSM.Orchestrators.TaskRouter",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T19:33:51.951770Z",
+    "updated_at": "2025-08-14T19:33:51.983234Z",
+    "tags": []
+  },
+  "plugins": [],
+  "tenant_id": null,
+  "current_state": "classify",
+  "performance": {
+    "transition_count": 0,
+    "last_transition_at": null,
+    "avg_transition_time": 0
+  },
+  "subscribers": []
+}

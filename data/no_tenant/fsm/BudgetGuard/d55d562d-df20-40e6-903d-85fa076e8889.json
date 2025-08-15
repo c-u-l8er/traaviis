@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "d55d562d-df20-40e6-903d-85fa076e8889",
+  "module": "Elixir.FSM.Safety.BudgetGuard",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T19:04:53.491158Z",
+    "updated_at": "2025-08-14T19:04:53.491205Z",
+    "tags": []
+  },
+  "plugins": [],
+  "current_state": "green",
+  "tenant_id": null,
+  "performance": {
+    "transition_count": 0,
+    "last_transition_at": null,
+    "avg_transition_time": 0
+  },
+  "subscribers": []
+}

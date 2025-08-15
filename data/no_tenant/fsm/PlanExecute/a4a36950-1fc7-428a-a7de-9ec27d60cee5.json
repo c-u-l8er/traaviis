@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "a4a36950-1fc7-428a-a7de-9ec27d60cee5",
+  "module": "Elixir.FSM.Orchestrators.PlanExecute",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T19:35:16.619135Z",
+    "tags": [],
+    "updated_at": "2025-08-14T19:35:16.657894Z"
+  },
+  "plugins": [],
+  "subscribers": [],
+  "current_state": "plan",
+  "performance": {
+    "avg_transition_time": 0,
+    "last_transition_at": null,
+    "transition_count": 0
+  },
+  "tenant_id": null
+}

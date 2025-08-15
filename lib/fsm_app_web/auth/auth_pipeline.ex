@@ -1,7 +1,6 @@
 defmodule FSMAppWeb.Auth.Pipeline do
   @moduledoc false
   import Plug.Conn
-  import Phoenix.Controller
 
   alias FSMApp.Accounts
 

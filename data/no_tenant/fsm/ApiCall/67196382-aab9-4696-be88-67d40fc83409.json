@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "67196382-aab9-4696-be88-67d40fc83409",
+  "module": "Elixir.FSM.Integration.ApiCall",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T18:56:43.456509Z",
+    "updated_at": "2025-08-14T18:56:43.473936Z",
+    "tags": []
+  },
+  "plugins": [],
+  "current_state": "ready",
+  "performance": {
+    "transition_count": 0,
+    "last_transition_at": null,
+    "avg_transition_time": 0
+  },
+  "subscribers": [],
+  "tenant_id": null
+}

@@ -1,0 +1,3 @@
+{"module":"Elixir.FSM.Orchestrators.PlanExecute","timestamp":"2025-08-14T19:06:58.539014Z","type":"transition","seq":4,"to":"execute","from":"plan","fsm_id":"105191a3-ae9e-4a10-b6d4-91855897b6fc","event":"submit_plan","event_data":{},"tenant_id":null}
+{"module":"Elixir.FSM.Orchestrators.PlanExecute","timestamp":"2025-08-14T19:06:58.547004Z","type":"transition","seq":13,"to":"observe","from":"execute","fsm_id":"105191a3-ae9e-4a10-b6d4-91855897b6fc","event":"tool_result","event_data":{},"tenant_id":null}
+{"module":"Elixir.FSM.Orchestrators.PlanExecute","timestamp":"2025-08-14T19:06:58.547668Z","type":"transition","seq":20,"to":"evaluate","from":"observe","fsm_id":"105191a3-ae9e-4a10-b6d4-91855897b6fc","event":"observation_ready","event_data":{},"tenant_id":null}

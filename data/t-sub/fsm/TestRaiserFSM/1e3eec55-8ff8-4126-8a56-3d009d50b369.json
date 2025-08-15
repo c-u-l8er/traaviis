@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "1e3eec55-8ff8-4126-8a56-3d009d50b369",
+  "module": "Elixir.FSM.HardeningTest.TestRaiserFSM",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T20:19:47.244203Z",
+    "tags": [],
+    "updated_at": "2025-08-14T20:19:47.244239Z"
+  },
+  "plugins": [],
+  "subscribers": [],
+  "current_state": "idle",
+  "performance": {
+    "avg_transition_time": 0,
+    "last_transition_at": null,
+    "transition_count": 0
+  },
+  "tenant_id": "t-sub"
+}

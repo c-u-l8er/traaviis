@@ -1,6 +1,5 @@
 defmodule FSMAppWeb.Auth.OnMountCurrentUser do
   @moduledoc false
-  import Phoenix.LiveView
   import Phoenix.Component
   alias FSMApp.Accounts
 

@@ -1,0 +1,1 @@
+{"module":"Elixir.FSM.Components.Timer","timestamp":"2025-08-14T19:00:10.672007Z","type":"transition","seq":201,"to":"running","from":"idle","fsm_id":"c3838f93-54db-455c-956b-eca5608f2de4","event":"start","event_data":{},"tenant_id":null}

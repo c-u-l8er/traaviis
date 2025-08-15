@@ -1,0 +1,2 @@
+{"module":"Elixir.FSM.HardeningTest.TestFSM","timestamp":"2025-08-14T18:54:18.039350Z","type":"created","seq":283,"initial_state":"idle","tenant_id":"t-sub","initial_data":{},"fsm_id":"89d5a263-0a7b-4057-8544-4d4dc7ba5b81"}
+{"module":"Elixir.FSM.HardeningTest.TestFSM","timestamp":"2025-08-14T18:54:18.044559Z","type":"transition","seq":286,"to":"active","from":"idle","event":"start","event_data":{"raise":"true"},"tenant_id":"t-sub","fsm_id":"89d5a263-0a7b-4057-8544-4d4dc7ba5b81"}

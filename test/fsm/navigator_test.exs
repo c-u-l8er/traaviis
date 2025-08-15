@@ -1,6 +1,5 @@
 defmodule FSM.NavigatorTest do
   use ExUnit.Case
-  alias FSM.Navigator
 
   # Test FSM module
   defmodule TestFSM do

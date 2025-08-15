@@ -1,0 +1,1 @@
+{"module":"Elixir.FSM.NavigatorTest.TestFSM","timestamp":"2025-08-14T19:07:01.091796Z","type":"transition","seq":276,"to":"active","from":"idle","fsm_id":"3d045a9b-5494-4a75-ae2a-5dcc871c1e4a","event":"start","event_data":{},"tenant_id":null}

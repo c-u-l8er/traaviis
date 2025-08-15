@@ -1,0 +1,25 @@
+{
+  "data": {
+    "raise": true
+  },
+  "id": "c16b5806-d81d-4777-9167-4a5a577d3ce0",
+  "module": "Elixir.FSM.HardeningTest.TestFSM",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T18:58:03.066368Z",
+    "updated_at": "2025-08-14T18:58:03.071826Z",
+    "tags": []
+  },
+  "plugins": [],
+  "current_state": "active",
+  "performance": {
+    "transition_count": 1,
+    "last_transition_at": "2025-08-14T18:58:03.071832Z",
+    "avg_transition_time": 10.0
+  },
+  "subscribers": [
+    "0df2036e-09eb-42be-9943-434f05ffd49c",
+    "d3a67fbc-63bb-4342-9271-64141836dc5e"
+  ],
+  "tenant_id": "t-sub"
+}

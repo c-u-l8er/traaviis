@@ -1,0 +1,3 @@
+{"module":"Elixir.FSM.Reliability.CircuitBreaker","timestamp":"2025-08-14T19:38:40.727719Z","type":"transition","seq":12,"to":"open","from":"closed","tenant_id":null,"fsm_id":"831419f7-603d-4c45-8eba-0e808ccd2d6e","event":"trip","event_data":{}}
+{"module":"Elixir.FSM.Reliability.CircuitBreaker","timestamp":"2025-08-14T19:38:40.734699Z","type":"transition","seq":18,"to":"half_open","from":"open","tenant_id":null,"fsm_id":"831419f7-603d-4c45-8eba-0e808ccd2d6e","event":"cooldown","event_data":{}}
+{"module":"Elixir.FSM.Reliability.CircuitBreaker","timestamp":"2025-08-14T19:38:40.739254Z","type":"transition","seq":19,"to":"closed","from":"half_open","tenant_id":null,"fsm_id":"831419f7-603d-4c45-8eba-0e808ccd2d6e","event":"probe_success","event_data":{}}

@@ -1,0 +1,20 @@
+{
+  "data": {},
+  "id": "10e54784-4640-49b1-952d-4407b82e3d9f",
+  "module": "Elixir.FSM.Reliability.CircuitBreaker",
+  "metadata": {
+    "version": 1,
+    "created_at": "2025-08-14T19:31:31.177212Z",
+    "updated_at": "2025-08-14T19:31:31.205243Z",
+    "tags": []
+  },
+  "plugins": [],
+  "current_state": "closed",
+  "performance": {
+    "transition_count": 0,
+    "last_transition_at": null,
+    "avg_transition_time": 0
+  },
+  "subscribers": [],
+  "tenant_id": null
+}
