@@ -1,0 +1,84 @@
+# BrokenRecord PaaS - Production Fly.io Configuration
+# Based on: https://fly.io/apps/brokenrecord-vj-ydg
+
+app = "brokenrecord-vj-ydg"
+primary_region = "dfw"
+kill_signal = "SIGTERM"
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
+
+[build]
+  # Use Dockerfile for build
+
+[env]
+  # Phoenix configuration
+  PHX_HOST = "brokenrecord.studio"
+  PHX_SERVER = "true"
+  PORT = "8080"
+  
+  # BrokenRecord configuration
+  MIX_ENV = "prod"
+  DATA_ROOT_PATH = "/app/data"
+  
+  # Fly.io integration (for self-hosting)
+  FLY_ORG = "personal"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  
+  [[http_service.checks]]
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "5s"
+    method = "GET"
+    path = "/health"
+    protocol = "http"
+
+# Resource configuration for production workload
+[machine]
+  # Production resources: 2 CPUs, 4GB RAM for handling multiple tenants
+  cpu_kind = "shared"
+  cpus = 2
+  memory = "2gb"
+
+# Data persistence for ./data directory (JSON files)
+[mounts]
+  source = "brokenrecord_data_small"
+  destination = "/app/data"
+  size_gb = 5
+
+# Console for production debugging
+[[services]]
+  internal_port = 4369
+  protocol = "tcp"
+  
+  [[services.ports]]
+    handlers = []
+    port = 4369
+
+# Additional regions for global deployment (commented for now)
+# [[regions]]
+#   name = "ord"  # Chicago (primary)
+# [[regions]]
+#   name = "lhr"  # London
+# [[regions]]
+#   name = "nrt"  # Tokyo
+# [[regions]]  
+#   name = "syd"  # Sydney
+
+# Secrets configuration (set via flyctl secrets)
+# Required secrets:
+# - SECRET_KEY_BASE (Phoenix secret key)
+# - ADMIN_PASSWORD (Admin control panel password - REQUIRED for production security)
+# - FLY_API_TOKEN (for self-hosting Fly.io integration)
+# - STRIPE_SECRET_KEY (for billing, when implemented)
+# - STRIPE_WEBHOOK_SECRET (for billing webhooks)
+#
+# To set admin password:
+# flyctl secrets set ADMIN_PASSWORD="your-secure-admin-password"

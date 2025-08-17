@@ -16,7 +16,7 @@ defmodule FSM.ModuleDiscovery do
   The `:name` is the short module name (e.g., "SmartDoor").
   """
   def list_available_fsms do
-    modules = Application.spec(@app, :modules) || []
+    modules = get_all_modules()
 
     modules
     |> Enum.filter(&is_fsm_module?/1)
@@ -24,15 +24,59 @@ defmodule FSM.ModuleDiscovery do
     |> Enum.sort_by(& &1.name)
   end
 
+  defp get_all_modules do
+    # First try to get modules from the application spec
+    case Application.spec(@app, :modules) do
+      modules when is_list(modules) and modules != [] ->
+        modules
+      _ ->
+        # Fallback: Try to load known FSM modules and discover from loaded modules
+        known_fsm_modules = [
+          FSM.SmartDoor,
+          FSM.Orchestrators.PlanExecute,
+          FSM.Core.AICustomerService,
+          FSM.Components.Timer,
+          FSM.Components.Security
+        ]
+
+        # Try to ensure all known modules are loaded
+        Enum.each(known_fsm_modules, fn module ->
+          try do
+            Code.ensure_loaded!(module)
+          rescue
+            _ -> :ok # Ignore if module doesn't exist
+          end
+        end)
+
+        # Now get all loaded modules that match the FSM pattern
+        :code.all_loaded()
+        |> Enum.map(fn {module, _} -> module end)
+        |> Enum.filter(fn module ->
+          case Atom.to_string(module) do
+            "Elixir.FSM." <> _rest -> true
+            _ -> false
+          end
+        end)
+    end
+  end
+
   defp is_fsm_module?(module) when is_atom(module) do
     case Atom.to_string(module) do
       "Elixir.FSM." <> rest ->
-        not excluded_namespace?(rest) and
-          function_exported?(module, :new, 2) and
-          function_exported?(module, :navigate, 3)
+        not excluded_namespace?(rest) and has_fsm_functions?(module)
 
       _ ->
         false
+    end
+  end
+
+  defp has_fsm_functions?(module) do
+    try do
+      # Ensure the module is loaded before checking exports
+      Code.ensure_loaded!(module)
+      function_exported?(module, :new, 2) and function_exported?(module, :navigate, 3)
+    rescue
+      _ -> false
     end
   end
 
