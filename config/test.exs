@@ -8,6 +8,7 @@ config :fsm_app, FSMAppWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "Z02aUBf+C2NiAS5JmN/1dURriaF/XJU9/xB0/hEAkMzX/QO40B1LLuU/h60uIG6M",
   live_view: [signing_salt: "GFtgmDS6uTK7QCPB"],
+  pubsub_server: FSMApp.PubSub,
   server: false
 
 # Print only warnings and errors during test

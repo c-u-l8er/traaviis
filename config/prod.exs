@@ -12,6 +12,7 @@ config :fsm_app, FSMAppWeb.Endpoint,
     port: String.to_integer(System.get_env("PORT") || "4000")
   ],
   secret_key_base: System.get_env("SECRET_KEY_BASE"),
+  pubsub_server: FSMApp.PubSub,
   check_origin: false
 
 # ## SSL Support

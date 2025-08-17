@@ -10,6 +10,7 @@ config :fsm_app, FSMAppWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "jfRbGgFaVo8bWBtV+T4NeM6ABMBvp/B+uARcO9/U4Q7YKni3Uc5lPFouABMaZQvT",
   live_view: [signing_salt: "GFtgmDS6uTK7QCPB"],
+  pubsub_server: FSMApp.PubSub,
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
