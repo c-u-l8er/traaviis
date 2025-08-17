@@ -1,7 +1,7 @@
 # TRAAVIIS - Production Fly.io Configuration
-# Based on: https://fly.io/apps/traaviis-vj-ydg
+# Based on: https://fly.io/apps/traaviis
 
-app = "traaviis-vj-ydg"
+app = "traaviis"
 primary_region = "dfw"
 kill_signal = "SIGTERM"
 kill_timeout = "5s"
