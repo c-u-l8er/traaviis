@@ -60,7 +60,16 @@ defmodule FSM.EventStore do
     {:ok, merged}
   end
 
-  defp data_dir, do: Path.expand("data")
+  defp data_dir do
+    case Application.get_env(:fsm_app, :env) do
+      :test ->
+        test_dir = Application.get_env(:fsm_app, :test_data_dir, "test/tmp/data")
+        Path.expand(test_dir)
+      _ ->
+        Path.expand("data")
+    end
+  end
+
   defp events_root(tenant), do: Path.join(data_dir(), Path.join([tenant || "no_tenant", "events"]))
 
   defp append_record(record) do

@@ -285,7 +285,7 @@ defmodule FSM.Registry do
     {:ok, new_state} = load_state_from_json()
     require Logger
     Logger.info("FSM.Registry reloaded state from disk (#{map_size(new_state.fsms)} fsms)")
-    {:reply, :ok, new_state}
+    {:reply, {:ok, new_state}, new_state}
   end
 
   @impl true
@@ -342,17 +342,41 @@ defmodule FSM.Registry do
     end
   end
 
-  # JSON persistence helpers (./data/<tenant>/fsm/<module>/<id>.json)
-  defp data_dir, do: Path.expand("data")
-  defp legacy_dir, do: Path.expand("data")
+    # JSON persistence helpers - Enhanced Directory Structure
+  # NEW: ./data/tenants/{tenant_id}/workflows/{Module}/{fsm_id}.json
+  # NEW: ./data/system/* for global platform data
+  defp data_dir do
+    case Application.get_env(:fsm_app, :env) do
+      :test ->
+        test_dir = Application.get_env(:fsm_app, :test_data_dir, "test/tmp/data")
+        Path.expand(test_dir)
+      _ ->
+        Path.expand("data")
+    end
+  end
+
+
 
   defp fsm_file_path(id, module, tenant_id) do
-    tenant = sanitize_for_path(tenant_id || "no_tenant")
-    mod_short = module_short(module)
-    id_safe = sanitize_for_path(id_to_string(id))
-    dir = Path.join([data_dir(), tenant, "fsm", mod_short])
-    File.mkdir_p!(dir)
-    Path.join(dir, id_safe <> ".json")
+    case tenant_id do
+      nil ->
+        # No tenant - store in system directory
+        tenant_safe = "no_tenant"
+        mod_short = module_short(module)
+        id_safe = sanitize_for_path(id_to_string(id))
+        dir = Path.join([data_dir(), tenant_safe, "fsm", mod_short])
+        File.mkdir_p!(dir)
+        Path.join(dir, id_safe <> ".json")
+
+      tenant_id ->
+        # Enhanced structure: data/tenants/{tenant_id}/workflows/{Module}/{fsm_id}.json
+        tenant_safe = sanitize_for_path(tenant_id)
+        mod_short = module_short(module)
+        id_safe = sanitize_for_path(id_to_string(id))
+        dir = Path.join([data_dir(), "tenants", tenant_safe, "workflows", mod_short])
+        File.mkdir_p!(dir)
+        Path.join(dir, id_safe <> ".json")
+    end
   end
 
   defp persist_fsm_to_file(id, module, fsm) do
@@ -363,18 +387,17 @@ defmodule FSM.Registry do
     end
   end
 
-  defp delete_fsm_file(id, module, tenant_id) do
-    # Remove tenant-first path
+    defp delete_fsm_file(id, module, tenant_id) do
+    # Remove from enhanced structure only
     _ = File.rm(fsm_file_path(id, module, tenant_id))
-    # Remove legacy flat file if present
-    _ = File.rm(Path.join(legacy_dir(), "#{id_to_string(id)}.json"))
     :ok
   end
 
-  defp load_state_from_json do
-    legacy_files = if File.dir?(legacy_dir()), do: Path.wildcard(Path.join(legacy_dir(), "*.json")), else: []
-    new_files = if File.dir?(data_dir()), do: Path.wildcard(Path.join(data_dir(), "*/fsm/**/*.json")), else: []
-    files = legacy_files ++ new_files
+    defp load_state_from_json do
+    # Only use enhanced directory structure
+    enhanced_structure_files = if File.dir?(data_dir()), do: Path.wildcard(Path.join(data_dir(), "tenants/*/workflows/**/*.json")), else: []
+
+    files = enhanced_structure_files
 
     fsms =
       files

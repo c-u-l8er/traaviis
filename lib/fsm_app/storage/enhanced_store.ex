@@ -37,9 +37,18 @@ defmodule FSMApp.Storage.EnhancedStore do
   require Logger
   alias Jason
 
-  @data_root Path.expand("data")
-  @system_root Path.join(@data_root, "system")
-  @tenants_root Path.join(@data_root, "tenants")
+  defp data_root do
+    base_dir = case Application.get_env(:fsm_app, :env) do
+      :test ->
+        Application.get_env(:fsm_app, :test_data_dir, "test/tmp/data")
+      _ ->
+        "data"
+    end
+    Path.expand(base_dir)
+  end
+
+  defp system_root, do: Path.join(data_root(), "system")
+  defp tenants_root, do: Path.join(data_root(), "tenants")
 
   # System-level storage operations
 
@@ -86,7 +95,7 @@ defmodule FSMApp.Storage.EnhancedStore do
   List all platform users with optional filtering.
   """
   def list_users(opts \\ []) do
-    users_dir = Path.join(@system_root, "users")
+    users_dir = Path.join(system_root(), "users")
 
     case File.ls(users_dir) do
       {:ok, files} ->
@@ -151,7 +160,7 @@ defmodule FSMApp.Storage.EnhancedStore do
   List all members of a tenant.
   """
   def list_tenant_members(tenant_id) do
-    members_dir = Path.join([@tenants_root, tenant_id, "members"])
+    members_dir = Path.join([tenants_root(), tenant_id, "members"])
 
     case File.ls(members_dir) do
       {:ok, files} ->
@@ -205,24 +214,31 @@ defmodule FSMApp.Storage.EnhancedStore do
   Initialize the enhanced directory structure.
   """
   def initialize_directory_structure do
-    directories = [
-      Path.join(@system_root, "users"),
-      Path.join(@system_root, "sessions"),
-      @tenants_root
-    ]
-
-    results = Enum.map(directories, &ensure_directory_exists/1)
-
-    if Enum.all?(results, &(&1 == :ok)) do
-      # Initialize index files
-      with :ok <- initialize_user_index(),
-           :ok <- initialize_tenant_index() do
-        Logger.info("Enhanced directory structure initialized successfully")
+    case Application.get_env(:fsm_app, :env) do
+      :test ->
+        # Skip initialization in test environment - handled by DataHelper
+        Logger.debug("Skipping directory initialization in test environment")
         :ok
-      end
-    else
-      Logger.error("Failed to initialize some directories: #{inspect(results)}")
-      {:error, :directory_creation_failed}
+      _ ->
+        directories = [
+          Path.join(system_root(), "users"),
+          Path.join(system_root(), "sessions"),
+          tenants_root()
+        ]
+
+        results = Enum.map(directories, &ensure_directory_exists/1)
+
+        if Enum.all?(results, &(&1 == :ok)) do
+          # Initialize index files
+          with :ok <- initialize_user_index(),
+               :ok <- initialize_tenant_index() do
+            Logger.info("Enhanced directory structure initialized successfully")
+            :ok
+          end
+        else
+          Logger.error("Failed to initialize some directories: #{inspect(results)}")
+          {:error, :directory_creation_failed}
+        end
     end
   end
 
@@ -247,23 +263,23 @@ defmodule FSMApp.Storage.EnhancedStore do
   # Private helper functions
 
   defp user_file_path(user_id) do
-    Path.join([@system_root, "users", "user_#{user_id}.json"])
+    Path.join([system_root(), "users", "user_#{user_id}.json"])
   end
 
   defp member_file_path(tenant_id, user_id) do
-    Path.join([@tenants_root, tenant_id, "members", "member_#{user_id}.json"])
+    Path.join([tenants_root(), tenant_id, "members", "member_#{user_id}.json"])
   end
 
   defp tenant_config_file_path(tenant_id) do
-    Path.join([@tenants_root, tenant_id, "config.json"])
+    Path.join([tenants_root(), tenant_id, "config.json"])
   end
 
   defp user_index_file_path do
-    Path.join([@system_root, "users", "index.json"])
+    Path.join([system_root(), "users", "index.json"])
   end
 
   defp tenant_index_file_path do
-    Path.join(@tenants_root, "index.json")
+    Path.join(tenants_root(), "index.json")
   end
 
   defp ensure_directory_exists(dir_path) do
@@ -305,7 +321,7 @@ defmodule FSMApp.Storage.EnhancedStore do
   end
 
   defp update_member_roster(tenant_id, user_id, role) do
-    roster_file = Path.join([@tenants_root, tenant_id, "members", "roster.json"])
+    roster_file = Path.join([tenants_root(), tenant_id, "members", "roster.json"])
 
     current_roster = case read_json_file(roster_file) do
       {:ok, roster} -> roster

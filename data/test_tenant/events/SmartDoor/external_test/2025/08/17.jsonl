@@ -1,2 +1,0 @@
-{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-17T21:11:13.671826Z","type":"transition","seq":79,"to":"emergency_lock","from":"closed","event":"emergency_lock","event_data":{"reason":"security_alarm"},"fsm_id":"external_test","tenant_id":"test_tenant"}
-{"module":"Elixir.FSM.SmartDoor","timestamp":"2025-08-17T21:11:13.673166Z","type":"transition","seq":80,"to":"closed","from":"emergency_lock","event":"emergency_clear","event_data":{"authorized_by":"security_officer"},"fsm_id":"external_test","tenant_id":"test_tenant"}

@@ -30,8 +30,16 @@ defmodule FSMApp.Storage.DirectoryMigrator do
   alias FSMApp.Storage.{FSStore, EnhancedStore}
   alias Jason
 
-  @data_root Path.expand("data")
-  @backup_dir Path.join(@data_root, "_migration_backup")
+  defp data_root do
+    base_dir = case Application.get_env(:fsm_app, :env) do
+      :test ->
+        Application.get_env(:fsm_app, :test_data_dir, "test/tmp/data")
+      _ ->
+        "data"
+    end
+    Path.expand(base_dir)
+  end
+  defp backup_dir, do: Path.join(data_root(), "_migration_backup")
 
   @doc """
   Perform complete migration to enhanced directory structure.
@@ -52,7 +60,7 @@ defmodule FSMApp.Storage.DirectoryMigrator do
     else
       error ->
         Logger.error("❌ Migration failed: #{inspect(error)}")
-        Logger.info("📦 Backup available at: #{@backup_dir}")
+        Logger.info("📦 Backup available at: #{backup_dir()}")
         error
     end
   end
@@ -63,10 +71,10 @@ defmodule FSMApp.Storage.DirectoryMigrator do
   def create_backup do
     Logger.info("📦 Creating backup of current data")
 
-    if File.exists?(@data_root) do
-      case File.cp_r(@data_root, @backup_dir) do
+    if File.exists?(data_root()) do
+      case File.cp_r(data_root(), backup_dir()) do
         {:ok, _} ->
-          Logger.info("✅ Backup created at #{@backup_dir}")
+          Logger.info("✅ Backup created at #{backup_dir()}")
           :ok
         error ->
           Logger.error("❌ Backup failed: #{inspect(error)}")
@@ -227,11 +235,11 @@ defmodule FSMApp.Storage.DirectoryMigrator do
     report = %{
       migration_completed_at: DateTime.utc_now() |> DateTime.to_iso8601(),
       migration_version: "1.0.0",
-      directories_created: count_directories_in_path(Path.join(@data_root, "system")) +
-                           count_directories_in_path(Path.join(@data_root, "tenants")),
-      users_migrated: count_files_in_path(Path.join([@data_root, "system", "users"])),
+      directories_created: count_directories_in_path(Path.join(data_root(), "system")) +
+                           count_directories_in_path(Path.join(data_root(), "tenants")),
+      users_migrated: count_files_in_path(Path.join([data_root(), "system", "users"])),
       tenants_migrated: count_tenant_directories(),
-      backup_location: @backup_dir,
+      backup_location: backup_dir(),
       next_steps: [
         "Verify migrated data integrity",
         "Update application configuration to use enhanced storage",
@@ -240,7 +248,7 @@ defmodule FSMApp.Storage.DirectoryMigrator do
       ]
     }
 
-    report_file = Path.join(@data_root, "migration_report.json")
+    report_file = Path.join(data_root(), "migration_report.json")
     case Jason.encode(report, pretty: true) do
       {:ok, json} ->
         File.write(report_file, json)
@@ -338,11 +346,11 @@ defmodule FSMApp.Storage.DirectoryMigrator do
   end
 
   defp find_tenant_directories_with_fsm_data do
-    if File.exists?(@data_root) do
-      @data_root
+    if File.exists?(data_root()) do
+      data_root()
       |> File.ls!()
       |> Enum.filter(fn dir ->
-        dir_path = Path.join(@data_root, dir)
+        dir_path = Path.join(data_root(), dir)
         File.dir?(dir_path) and has_fsm_subdirectory?(dir_path)
       end)
     else
@@ -356,8 +364,8 @@ defmodule FSMApp.Storage.DirectoryMigrator do
   end
 
   defp migrate_tenant_fsm_data(tenant_id) do
-    fsm_dir = Path.join([@data_root, tenant_id, "fsm"])
-    workflows_dir = Path.join([@data_root, "tenants", tenant_id, "workflows"])
+    fsm_dir = Path.join([data_root(), tenant_id, "fsm"])
+    workflows_dir = Path.join([data_root(), "tenants", tenant_id, "workflows"])
 
     if File.exists?(fsm_dir) do
       # Create workflows directory
@@ -424,7 +432,7 @@ defmodule FSMApp.Storage.DirectoryMigrator do
   end
 
   defp count_tenant_directories do
-    tenants_path = Path.join([@data_root, "tenants"])
+    tenants_path = Path.join([data_root(), "tenants"])
     count_directories_in_path(tenants_path)
   end
 end

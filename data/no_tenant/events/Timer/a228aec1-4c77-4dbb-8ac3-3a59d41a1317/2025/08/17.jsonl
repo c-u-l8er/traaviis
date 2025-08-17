@@ -1,2 +1,0 @@
-{"module":"Elixir.FSM.Components.Timer","timestamp":"2025-08-17T21:11:13.627018Z","type":"transition","seq":39,"to":"running","from":"idle","event":"start","event_data":{},"fsm_id":"a228aec1-4c77-4dbb-8ac3-3a59d41a1317","tenant_id":null}
-{"module":"Elixir.FSM.Components.Timer","timestamp":"2025-08-17T21:11:13.628170Z","type":"transition","seq":40,"to":"expired","from":"running","event":"timeout","event_data":{},"fsm_id":"a228aec1-4c77-4dbb-8ac3-3a59d41a1317","tenant_id":null}

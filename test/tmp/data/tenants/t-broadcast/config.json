@@ -1,0 +1,15 @@
+{
+  "id": "t-broadcast",
+  "name": "Test Tenant t-broadcast",
+  "created_at": "2025-08-17T21:41:45.278473Z",
+  "updated_at": "2025-08-17T21:41:45.278482Z",
+  "settings": {
+    "ai_model_access": true,
+    "default_permissions": [
+      "workflow_create",
+      "workflow_execute"
+    ],
+    "timezone": "UTC"
+  },
+  "slug": "t-broadcast"
+}

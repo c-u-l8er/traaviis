@@ -7,7 +7,15 @@ defmodule FSMApp.Storage.FSStore do
   safely, creating directories as needed.
   """
 
-  @data_root Path.expand("data")
+  defp data_root do
+    base_dir = case Application.get_env(:fsm_app, :env) do
+      :test ->
+        Application.get_env(:fsm_app, :test_data_dir, "test/tmp/data")
+      _ ->
+        "data"
+    end
+    Path.expand(base_dir)
+  end
 
   @type collection :: String.t()
   @type record :: map()
@@ -61,14 +69,14 @@ defmodule FSMApp.Storage.FSStore do
   end
 
   defp ensure_dir(namespace) do
-    File.mkdir_p(Path.join(@data_root, namespace))
+    File.mkdir_p(Path.join(data_root(), namespace))
   end
 
   defp path_for(namespace, collection) do
-    Path.join([@data_root, namespace, collection <> ".json"]) |> Path.expand()
+    Path.join([data_root(), namespace, collection <> ".json"]) |> Path.expand()
   end
 
   defp temp_path_for(namespace, collection) do
-    Path.join([@data_root, namespace, ".#{collection}.tmp"]) |> Path.expand()
+    Path.join([data_root(), namespace, ".#{collection}.tmp"]) |> Path.expand()
   end
 end

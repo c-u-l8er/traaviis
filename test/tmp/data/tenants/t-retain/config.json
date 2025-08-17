@@ -1,0 +1,15 @@
+{
+  "id": "t-retain",
+  "name": "Test Tenant t-retain",
+  "created_at": "2025-08-17T21:41:45.277134Z",
+  "updated_at": "2025-08-17T21:41:45.277140Z",
+  "settings": {
+    "ai_model_access": true,
+    "default_permissions": [
+      "workflow_create",
+      "workflow_execute"
+    ],
+    "timezone": "UTC"
+  },
+  "slug": "t-retain"
+}

@@ -19,6 +19,13 @@ defmodule FSMApp.Application do
 
       # Database repository removed (filesystem-backed persistence in use)
 
+      # Initialize enhanced storage directory structure (skip in test env)
+      {Task, fn ->
+        unless Application.get_env(:fsm_app, :env) == :test do
+          FSMApp.Storage.EnhancedStore.initialize_directory_structure()
+        end
+      end},
+
       # Start the ETS Manager for hybrid storage
       FSMApp.Storage.ETSManager,
 
