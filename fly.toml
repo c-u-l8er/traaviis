@@ -1,7 +1,7 @@
-# BrokenRecord PaaS - Production Fly.io Configuration
-# Based on: https://fly.io/apps/brokenrecord-vj-ydg
+# TRAAVIIS - Production Fly.io Configuration
+# Based on: https://fly.io/apps/traaviis-vj-ydg
 
-app = "brokenrecord-vj-ydg"
+app = "traaviis-vj-ydg"
 primary_region = "dfw"
 kill_signal = "SIGTERM"
 kill_timeout = "5s"
@@ -14,11 +14,11 @@ kill_timeout = "5s"
 
 [env]
   # Phoenix configuration
-  PHX_HOST = "brokenrecord.studio"
+  PHX_HOST = "traaviis.com"
   PHX_SERVER = "true"
   PORT = "8080"
   
-  # BrokenRecord configuration
+  # TRAAVIIS configuration
   MIX_ENV = "prod"
   DATA_ROOT_PATH = "/app/data"
   
@@ -49,7 +49,7 @@ kill_timeout = "5s"
 
 # Data persistence for ./data directory (JSON files)
 [mounts]
-  source = "brokenrecord_data_small"
+  source = "traaviis_data_small"
   destination = "/app/data"
   size_gb = 5
 
