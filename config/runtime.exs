@@ -33,6 +33,7 @@ if config_env() == :prod do
       port: port
     ],
     secret_key_base: secret_key_base,
+    server: true,
     pubsub_server: FSMApp.PubSub,
     live_view: [signing_salt: "GFtgmDS6uTK7QCPB"]
 
