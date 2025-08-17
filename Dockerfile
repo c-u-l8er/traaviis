@@ -2,7 +2,7 @@
 # Multi-stage build for optimized production image
 
 # Build stage
-FROM hexpm/elixir:1.15.7-erlang-26.2.1-debian-bookworm-20231009-slim as build
+FROM hexpm/elixir:1.18.0-erlang-27.0.1-debian-bookworm-20231009-slim as build
 
 # Install build dependencies
 RUN apt-get update -y && apt-get install -y build-essential git curl nodejs npm \
@@ -71,7 +71,7 @@ RUN chown app:app /app
 USER app
 
 # Copy the release (use explicit prod path since MIX_ENV isn't available in runtime stage)
-COPY --from=build --chown=app:app /app/_build/prod/rel/broken_record ./
+COPY --from=build --chown=app:app /app/_build/prod/rel/fsm_app ./
 
 # Create data directory for JSON storage
 RUN mkdir -p /app/data/system/users /app/data/tenants
@@ -84,4 +84,4 @@ RUN chmod +x /app/bin/health_check
 EXPOSE 8080
 
 # Run the Phoenix server
-CMD ["/app/bin/broken_record", "start"]
+CMD ["/app/bin/fsm_app", "start"]
