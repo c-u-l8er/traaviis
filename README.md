@@ -2,6 +2,7 @@
 
 **Evolving into the definitive platform for AI workflow orchestration**
 
+
 TRAAVIIS transforms finite state machines into a powerful substrate for agentic AI workflows. Built on Elixir's actor model with native MCP integration, it provides deterministic control, safety guardrails, and real-time observability for complex AI agent interactions.
 
 > 🚀 **v2.0 LARGELY IMPLEMENTED** - Effects System, AI integration, and multi-agent coordination are now production-ready. Visual workflow designer coming soon. See [Implementation Roadmap](./FSM_V2_IMPLEMENTATION_ROADMAP.md) for details.
