@@ -13,8 +13,8 @@ kill_timeout = "5s"
   # Use Dockerfile for build
 
 [env]
-  # Phoenix configuration
-  PHX_HOST = "traaviis.com"
+  # Phoenix configuration  
+  PHX_HOST = "traaviis.fly.dev"
   PHX_SERVER = "true"
   PORT = "8080"
   
