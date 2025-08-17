@@ -42,7 +42,7 @@ kill_timeout = "5s"
 
 # Resource configuration for production workload
 [machine]
-  # Production resources: 2 CPUs, 4GB RAM for handling multiple tenants
+  # Production resources: 2 CPUs, 2-4GB RAM for handling multiple tenants
   cpu_kind = "shared"
   cpus = 2
   memory = "2gb"
