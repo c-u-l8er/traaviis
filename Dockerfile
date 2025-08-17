@@ -2,7 +2,7 @@
 # Multi-stage build for optimized production image
 
 # Build stage
-FROM hexpm/elixir:1.18.0-erlang-27.0.1-debian-bookworm-20231009-slim as build
+FROM elixir:1.18.4 as build
 
 # Install build dependencies
 RUN apt-get update -y && apt-get install -y build-essential git curl nodejs npm \
