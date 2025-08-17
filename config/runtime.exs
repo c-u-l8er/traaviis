@@ -27,10 +27,9 @@ if config_env() == :prod do
   config :fsm_app, FSMAppWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
+      # Bind on all IPv4 interfaces for fly.io
       # See the documentation on https://hexdocs.pm/bandit/Bandit.html#t:options/0
-      ip: {0, 0, 0, 0, 0, 0, 0, 0},
+      ip: {0, 0, 0, 0},
       port: port
     ],
     secret_key_base: secret_key_base,
