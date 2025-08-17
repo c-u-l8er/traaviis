@@ -37,6 +37,9 @@ defmodule FSMAppWeb.Router do
     # Alternative auth routes (aliases to the above)
     get "/auth/login", SessionController, :new
     post "/auth/login", SessionController, :create
+
+    # Health check endpoint for fly.io
+    get "/health", PageController, :health
   end
 
   # Authenticated routes (authentication required)

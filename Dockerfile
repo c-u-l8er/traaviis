@@ -40,9 +40,8 @@ RUN mix assets.deploy
 # Compile the release
 RUN mix compile
 
-# Copy runtime files and health check script
+# Copy runtime files
 COPY config/runtime.exs config/
-COPY bin/health_check /app/bin/health_check
 
 # Create the release
 RUN mix release
@@ -75,10 +74,6 @@ COPY --from=build --chown=app:app /app/_build/prod/rel/fsm_app ./
 
 # Create data directory for JSON storage
 RUN mkdir -p /app/data/system/users /app/data/tenants
-
-# Copy health check script
-COPY --from=build --chown=app:app /app/bin/health_check /app/bin/health_check
-RUN chmod +x /app/bin/health_check
 
 # Expose port
 EXPOSE 8080
