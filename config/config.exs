@@ -39,6 +39,12 @@ config :fsm_app, Oban,
     fsm_operations: 15
   ]
 
+# Configure Guardian
+config :fsm_app, FSMAppWeb.Auth.Guardian,
+  issuer: "fsm_app",
+  secret_key: "gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr9C",
+  ttl: {24, :hours}
+
 # Configure Prometheus
 config :fsm_app, PrometheusEx,
   metrics: [

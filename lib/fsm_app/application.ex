@@ -19,6 +19,9 @@ defmodule FSMApp.Application do
 
       # Database repository removed (filesystem-backed persistence in use)
 
+      # Start the ETS Manager for hybrid storage
+      FSMApp.Storage.ETSManager,
+
       # Start the PubSub system
       {Phoenix.PubSub, name: FSMApp.PubSub},
 

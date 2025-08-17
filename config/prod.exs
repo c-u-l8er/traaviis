@@ -15,6 +15,10 @@ config :fsm_app, FSMAppWeb.Endpoint,
   pubsub_server: FSMApp.PubSub,
   check_origin: false
 
+# Configure Guardian for production
+config :fsm_app, FSMAppWeb.Auth.Guardian,
+  secret_key: System.get_env("GUARDIAN_SECRET_KEY") || "gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr9C"
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key

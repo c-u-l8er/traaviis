@@ -1,2 +1,0 @@
-{"module":"Elixir.FSM.Components.Security","timestamp":"2025-08-14T20:05:50.875302Z","type":"transition","seq":212,"to":"locked","from":"unlocked","fsm_id":"1f5f6ec4-73f1-4295-94fb-a2b14c060795","tenant_id":null,"event_data":{},"event":"lock"}
-{"module":"Elixir.FSM.Components.Security","timestamp":"2025-08-14T20:05:50.876209Z","type":"transition","seq":213,"to":"alarm","from":"locked","fsm_id":"1f5f6ec4-73f1-4295-94fb-a2b14c060795","tenant_id":null,"event_data":{},"event":"forced_entry"}

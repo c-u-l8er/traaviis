@@ -1,3 +1,0 @@
-{"module":"Elixir.FSM.Orchestrators.TaskRouter","timestamp":"2025-08-14T19:06:58.539025Z","type":"transition","seq":2,"to":"route","from":"classify","fsm_id":"6aeeabf6-c418-4540-b7d2-6491ea4fa19d","event":"classified","event_data":{},"tenant_id":null}
-{"module":"Elixir.FSM.Orchestrators.TaskRouter","timestamp":"2025-08-14T19:06:58.546349Z","type":"transition","seq":11,"to":"handoff","from":"route","fsm_id":"6aeeabf6-c418-4540-b7d2-6491ea4fa19d","event":"routed","event_data":{},"tenant_id":null}
-{"module":"Elixir.FSM.Orchestrators.TaskRouter","timestamp":"2025-08-14T19:06:58.547456Z","type":"transition","seq":19,"to":"acked","from":"handoff","fsm_id":"6aeeabf6-c418-4540-b7d2-6491ea4fa19d","event":"ack","event_data":{},"tenant_id":null}

@@ -1,1 +1,0 @@
-{"module":"Elixir.FSM.Components.Security","timestamp":"2025-08-14T20:19:56.079007Z","type":"transition","seq":28,"to":"alarm","from":"unlocked","event":"intrusion_detected","tenant_id":null,"fsm_id":"d7ac48b1-f109-4407-b684-042e90716eb7","event_data":{}}

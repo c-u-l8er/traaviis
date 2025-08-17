@@ -6,7 +6,11 @@ defmodule FSMAppWeb.Auth.OnMountCurrentUser do
   def on_mount(:default, _params, session, socket) do
     current_user = case session["user_id"] do
       nil -> nil
-      user_id -> Accounts.get_user!(user_id)
+      user_id ->
+        case Accounts.get_user(user_id) do
+          {:ok, user} -> user
+          {:error, _reason} -> nil
+        end
     end
 
     {:cont, assign(socket, current_user: current_user)}

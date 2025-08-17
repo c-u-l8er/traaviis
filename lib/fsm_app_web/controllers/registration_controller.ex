@@ -4,12 +4,14 @@ defmodule FSMAppWeb.RegistrationController do
   alias FSMApp.Accounts
   alias FSMApp.Tenancy
   alias FSMApp.Accounts.User
+  alias FSMAppWeb.Auth.AuthHelpers
+  alias FSMAppWeb.Auth.Guardian
 
   plug :put_layout, false when action in [:new, :create]
 
   def new(conn, _params) do
-    changeset = %User{} |> User.registration_changeset(%{}) |> Map.put(:action, :insert)
-    render(conn, :new, page_title: "Create your account", changeset: changeset)
+    changeset = %User{} |> User.registration_changeset(%{})
+    render(conn, :new, page_title: "Create your account", changeset: changeset, form_data: %{email: "", password: "", tenant_name: ""})
   end
 
   def create(conn, %{"user" => user_params}) do
@@ -17,31 +19,58 @@ defmodule FSMAppWeb.RegistrationController do
   end
 
   def create(conn, %{"email" => email, "password" => password} = attrs) do
+    tenant_name = String.trim(Map.get(attrs, "tenant_name", ""))
+    form_data = %{email: email, password: "", tenant_name: tenant_name}
+
     case Accounts.register_user(%{email: email, password: password}) do
       {:ok, user} ->
-        tenant_name = String.trim(Map.get(attrs, "tenant_name", ""))
         base_name = if tenant_name == "", do: default_tenant_name(email), else: tenant_name
         base_slug = slugify(base_name)
 
         with {:ok, tenant} <- ensure_tenant(base_name, base_slug),
              {:ok, _} <- Tenancy.add_member(tenant.id, user.id, :owner) do
-          conn
-          |> put_session(:user_id, user.id)
-          |> put_flash(:info, "Welcome! Your tenant is ready.")
-          |> redirect(to: ~p"/control-panel")
+          # Authenticate user properly with Guardian (same as SessionController)
+          case AuthHelpers.create_auth_token(user) do
+            {:ok, token, _claims} ->
+              conn
+              |> Guardian.Plug.sign_in(user)
+              |> AuthHelpers.put_auth_session(user, token)
+              |> put_flash(:info, "Welcome! Your account has been created.")
+              |> redirect(to: ~p"/control-panel")
+
+            {:error, token_error} ->
+              # Fallback: sign in with Guardian directly if token helper fails
+              conn
+              |> Guardian.Plug.sign_in(user)
+              |> put_session(:user_id, user.id)
+              |> put_flash(:info, "Welcome! Your account has been created.")
+              |> redirect(to: ~p"/control-panel")
+          end
         else
-          {:error, changeset} ->
+          {:error, reason} ->
             conn
-            |> put_flash(:error, "Could not create tenant: #{inspect(changeset.errors)}")
-            |> render(:new, page_title: "Create your account")
+            |> put_flash(:error, "Could not create organization: #{inspect(reason)}")
+            |> render(:new, page_title: "Create your account",
+                changeset: %User{} |> User.registration_changeset(%{}),
+                form_data: form_data)
         end
 
       {:error, changeset} ->
         changeset = Map.put(changeset, :action, :insert)
         conn
         |> put_flash(:error, "Please correct the errors below")
-        |> render(:new, page_title: "Create your account", changeset: changeset)
+        |> render(:new, page_title: "Create your account", changeset: changeset, form_data: form_data)
     end
+  end
+
+  # Handle case where form data is malformed or missing
+  def create(conn, _params) do
+    changeset = %User{} |> User.registration_changeset(%{}) |> Map.put(:action, :insert)
+    conn
+    |> put_flash(:error, "Please provide all required information")
+    |> render(:new, page_title: "Create your account",
+        changeset: changeset,
+        form_data: %{email: "", password: "", tenant_name: ""})
   end
 
   defp default_tenant_name(email) do
